@@ -47,8 +47,10 @@ Gewürfelt wird mit echten Würfeln, eingetragen wird nur der Wert – wie auf d
 | Full House / Kleine Straße / Große Straße / Kniffel | 25 / 30 / 40 / 50 |
 | jedes Feld | 0 = Streichen |
 
-Ein **weiterer Kniffel** wird beim Eintragen über „Das war ein weiterer Kniffel“ markiert (nur möglich, wenn das
-Kniffel-Feld bereits 50 Punkte hat): +50 Zusatzpunkte, Joker-Werte sind in den Optionen enthalten.
+Ein **weiterer Kniffel** (nur möglich, wenn das Kniffel-Feld bereits 50 Punkte hat): auf das eigene Kniffel-Feld
+tippen → „Weiteren Kniffel eintragen“ oder den Knopf „Weiteren Kniffel gewürfelt?“ nutzen, dann ein freies Feld
+antippen. Die Höchstpunktzahl des Feldes (Joker) ist vorgewählt, dazu kommen +50 Zusatzpunkte. Ist das Kniffel-Feld
+gestrichen, erklärt die App, dass es keine Zusatzpunkte gibt.
 Implementierung: `src/domain/rules/manual.ts`, serverseitig `private.kc_manual_valid` und `public.score_manual` /
 `public.correct_manual` (Migration `20261025120000_manual_scoring.sql`); ein Test prüft, dass TypeScript und SQL
 exakt dieselben Werte erlauben. Die frühere würfelbasierte Wertung bleibt im Backend erhalten.
