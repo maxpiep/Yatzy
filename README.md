@@ -38,6 +38,9 @@ Tablet, das weitergereicht wird). Die App ist ohne Server, Supabase oder Vercel 
 
 - **Online:** https://maxpiep.github.io/Yatzy/ – wird bei jedem Push auf `main` automatisch per GitHub Pages
   veröffentlicht. Tipp: „Zum Startbildschirm hinzufügen“, dann startet sie wie eine App.
+- **PIN-Sperre:** Beim ersten Start legt ihr eine PIN (4–8 Ziffern) fest. Ohne sie lässt sich die App auf dem
+  Gerät nicht öffnen; sie sperrt sich beim Schließen und nach 10 Minuten im Hintergrund (oder per Schloss-Symbol).
+  Wer nur die Adresse kennt, sieht auf seinem eigenen Gerät einen leeren Block – an eure Daten kommt niemand heran.
 - Alle Partien, die Bestenliste und die Kniffelkasse werden im Browser dieses Geräts gespeichert.
   **Unter Einstellungen → Datensicherung regelmäßig eine Sicherung herunterladen** – damit lässt sich der Stand
   auch auf einem neuen Gerät wiederherstellen.

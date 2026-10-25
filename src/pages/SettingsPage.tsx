@@ -11,6 +11,7 @@ import { Button } from '../ui/Button';
 import { ConnectionStatus } from '../ui/ConnectionStatus';
 import { CopyField, inviteUrl } from '../ui/CopyField';
 import { BackupPanel } from '../features/backup/BackupPanel';
+import { PinSettings } from '../features/lock/PinGate';
 
 const SYNC_TEXT: Record<SyncState, string> = {
   connecting: 'Verbinde mit dem Server …',
@@ -168,7 +169,10 @@ export function SettingsPage() {
           </section>
 
           {local ? (
-            <BackupPanel />
+            <>
+              <PinSettings />
+              <BackupPanel />
+            </>
           ) : (
           <section className="panel">
             <h2>Einladen</h2>

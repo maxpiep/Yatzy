@@ -16,8 +16,22 @@ const CATEGORIES = [
   ['chance', [6, 6, 5, 5, 4]],
 ] as const;
 
+const PIN = '2580';
+
+async function setPin(page: Page) {
+  await page.getByLabel('Neue PIN (4–8 Ziffern)').fill(PIN);
+  await page.getByLabel('PIN wiederholen').fill(PIN);
+  await page.getByTestId('pin-save').click();
+}
+
+async function unlock(page: Page) {
+  await page.getByLabel('PIN eingeben').fill(PIN);
+  await page.getByTestId('pin-unlock').click();
+}
+
 async function createClub(page: Page) {
   await page.goto('/');
+  await setPin(page);
   await page.getByTestId('create-club').click();
   await expect(page.getByTestId('open-start')).toBeVisible();
 }
@@ -112,6 +126,7 @@ test('zwei Tabs sehen denselben Spielstand', async ({ page, context }) => {
   const url = page.url();
   const second = await context.newPage();
   await second.goto(url);
+  await unlock(second);
   await expect(second.getByTestId('roll-state')).toContainText('Entwurf · Wurf 1');
   await enterRoll(page, [5, 5, 5, 5, 5]);
   await expect(second.getByTestId('roll-state')).toContainText('Bestätigt · Wurf 1 von 3');
@@ -135,6 +150,7 @@ test('Datensicherung lässt sich herunterladen und wiederherstellen', async ({ p
   const path = await download.path();
   await page.evaluate(() => localStorage.clear());
   await page.goto('/');
+  await setPin(page);
   await page.getByTestId('create-club').click();
   await page.goto('/einstellungen');
   page.once('dialog', (d) => void d.accept());
@@ -142,4 +158,25 @@ test('Datensicherung lässt sich herunterladen und wiederherstellen', async ({ p
   // Die App lädt nach der Wiederherstellung selbst die Übersicht neu.
   await page.waitForURL((url) => url.pathname === '/');
   await expect(page.getByTestId('live-game')).toBeVisible();
+});
+
+test('PIN-Sperre: ohne richtige PIN kein Zugriff, Sperren-Knopf und Fehlversuche', async ({ page, context }) => {
+  await createClub(page);
+  await page.getByTestId('lock-now').click();
+  await expect(page.getByRole('heading', { name: 'Gesperrt' })).toBeVisible();
+  await expect(page.getByTestId('open-start')).toHaveCount(0);
+  await page.getByLabel('PIN eingeben').fill('0000');
+  await page.getByTestId('pin-unlock').click();
+  await expect(page.getByRole('alert')).toContainText('Falsche PIN');
+  await unlock(page);
+  await expect(page.getByTestId('open-start')).toBeVisible();
+
+  // Neuer Tab (= neue Sitzung) ist wieder gesperrt; Direktaufruf einer Unterseite ebenso.
+  const other = await context.newPage();
+  await other.goto('/kasse');
+  await expect(other.getByRole('heading', { name: 'Gesperrt' })).toBeVisible();
+  await expect(other.getByRole('heading', { name: 'Kniffelkasse' })).toHaveCount(0);
+  // Die PIN steht nirgends im Klartext im Speicher.
+  const dump = await other.evaluate(() => JSON.stringify(localStorage));
+  expect(dump).not.toContain('2580');
 });

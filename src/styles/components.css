@@ -713,3 +713,9 @@
 .result--win .result__tag {
   color: var(--c-brass);
 }
+
+.pin-input {
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-size: var(--fs-2xl);
+}

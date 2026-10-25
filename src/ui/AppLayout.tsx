@@ -4,10 +4,12 @@ import { useClub } from '../state/club';
 import { usePageTransition } from '../motion/hooks';
 import { ConnectionStatus } from './ConnectionStatus';
 import { LogoMark } from './Logo';
-import { IconDice, IconHistory, IconHome, IconSettings, IconTrophy, IconWallet } from './Icons';
+import { IconDice, IconHistory, IconHome, IconLock, IconSettings, IconTrophy, IconWallet } from './Icons';
+import { usePinLock } from '../features/lock/PinGate';
 
 export function AppLayout({ children }: { children: ReactNode }) {
-  const { snapshot, room } = useClub();
+  const { snapshot, room, backend } = useClub();
+  const pin = usePinLock();
   const location = useLocation();
   const main = usePageTransition<HTMLElement>(location.pathname.split('/')[1] ?? '');
   const activeId = snapshot?.active?.game.id;
@@ -46,7 +48,12 @@ export function AppLayout({ children }: { children: ReactNode }) {
               </NavLink>
             ))}
           </nav>
-          <ConnectionStatus />
+          {backend?.mode !== 'local' && <ConnectionStatus />}
+          {pin && (
+            <button type="button" className="btn btn--ghost btn--icon" aria-label="App sperren" onClick={pin.lockNow} data-testid="lock-now">
+              <IconLock width={20} height={20} />
+            </button>
+          )}
           <NavLink to="/einstellungen" className="btn btn--ghost btn--icon" aria-label="Einstellungen">
             <IconSettings />
           </NavLink>
