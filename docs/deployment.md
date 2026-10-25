@@ -16,8 +16,16 @@ dauerhaften Speicher. **Datensicherung:** Einstellungen → Datensicherung → �
 (JSON-Datei); „Sicherung wiederherstellen“ ersetzt den Stand auf einem Gerät vollständig (mit Rückfrage, Datei
 wird geprüft).
 
-Falls der erste Lauf mit einem Hinweis zu Pages scheitert: einmalig unter **Settings → Pages → Source**
-„GitHub Actions“ wählen.
+**PIN-Sperre:** Die App fragt beim ersten Start nach einer PIN und danach bei jedem neuen Start bzw. nach
+10 Minuten im Hintergrund. Gespeichert wird nur ein PBKDF2-Hash (150 000 Iterationen, Salz); nach 5 Fehlversuchen
+steigt die Wartezeit (30 s, 60 s, …). „PIN vergessen?“ setzt die App zurück (alle Daten auf dem Gerät werden
+gelöscht, Wiederherstellung über eine Datensicherung). Die Sperre schützt vor Mitspielern am Gerät; sie ist kein
+Ersatz für die Bildschirmsperre bzw. Verschlüsselung des Geräts.
+
+**Voraussetzungen (einmalig):** GitHub Pages ist mit einem kostenlosen GitHub-Konto nur für **öffentliche**
+Repositorys verfügbar: Settings → General → Danger Zone → „Change visibility“ → „Public“. Danach unter
+**Settings → Pages → Source** „GitHub Actions“ wählen. Öffentlich ist nur der Programmcode – Spielstände liegen
+ausschließlich im Browser eures Geräts.
 
 ## B. Eigener Server (optional, zwei Geräte)
 

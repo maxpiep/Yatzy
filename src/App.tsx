@@ -15,6 +15,7 @@ import { CashboxPage } from './pages/CashboxPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { FatalScreen, JoinPage, LoadingScreen, SetupPage, UnconfiguredScreen } from './pages/SetupPages';
 import { GamePage } from './features/game/GamePage';
+import { PinGate } from './features/lock/PinGate';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -61,6 +62,19 @@ function ActiveGameRedirect() {
 }
 
 function Shell() {
+  const { phase, backend } = useClub();
+  // Ein-Gerät-Modus: die ganze App liegt hinter der PIN-Sperre.
+  if (backend?.mode === 'local' && phase.kind !== 'booting' && phase.kind !== 'unconfigured') {
+    return (
+      <PinGate>
+        <ShellContent />
+      </PinGate>
+    );
+  }
+  return <ShellContent />;
+}
+
+function ShellContent() {
   const { phase, snapshot } = useClub();
   const location = useLocation();
   if (location.pathname.endsWith('/beitreten') && phase.kind !== 'booting' && phase.kind !== 'unconfigured') return <JoinPage />;
