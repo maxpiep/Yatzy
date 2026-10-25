@@ -122,7 +122,7 @@ function ActiveGame() {
             <strong data-testid="current-player">{currentName}</strong> ist am Zug
             <span className="subtle" style={{ display: 'block' }}>
               {extraMode
-                ? 'Weiterer Kniffel: jetzt auf ein freies Feld tippen – es zählt die Höchstpunktzahl, dazu +50 Zusatzpunkte.'
+                ? 'Weiterer Kniffel: jetzt auf ein freies Feld tippen und die Augenzahl wählen – die App rechnet die Punkte aus, dazu +50 Zusatzpunkte.'
                 : `Würfeln, dann in der Spalte von ${currentName} auf das passende Feld tippen.`}
             </span>
             {canExtra && !extraMode && (
@@ -189,7 +189,7 @@ function ActiveGame() {
           title={`Kniffel · ${currentName}`}
           description={
             canExtra
-              ? 'Das Kniffel-Feld ist schon mit 50 belegt. Einen weiteren Kniffel tragt ihr in ein freies Feld ein: Es zählt dessen Höchstpunktzahl, dazu kommen 50 Zusatzpunkte.'
+              ? 'Das Kniffel-Feld ist schon mit 50 belegt. Einen weiteren Kniffel tragt ihr als Joker in ein freies Feld ein, dazu kommen 50 Zusatzpunkte.'
               : 'Das Kniffel-Feld ist gestrichen. Nach den Regeln gibt es für einen weiteren Kniffel dann keine Zusatzpunkte – tragt den Wurf einfach in ein anderes freies Feld ein (z. B. Fünfer oder Chance).'
           }
           onClose={() => setKniffelChoice(false)}

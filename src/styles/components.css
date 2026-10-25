@@ -733,6 +733,9 @@
 .picker--sum .picker__grid {
   grid-template-columns: repeat(6, 1fr);
 }
+.picker .picker__grid--faces {
+  grid-template-columns: repeat(6, 1fr);
+}
 .picker--fixed .picker__grid {
   grid-template-columns: 1fr;
 }

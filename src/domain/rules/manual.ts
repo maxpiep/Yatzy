@@ -80,3 +80,15 @@ export function manualScore(
     kniffelBonus: extraKniffel ? ruleset.extraKniffelBonus : 0,
   };
 }
+
+/**
+ * Punkte eines weiteren Kniffels (fünfmal `face`) als Joker in `category`:
+ * Full House und Straßen zählen ihren festen Wert, Pasch und Chance die Augensumme,
+ * im oberen Block zählt nur das passende Feld (sonst 0).
+ */
+export function jokerPoints(category: Category, face: number, ruleset: Ruleset): number {
+  const kind = manualKind(category);
+  if (kind === 'count') return UPPER_FACE[category] === face ? 5 * face : 0;
+  if (kind === 'sum') return 5 * face;
+  return ruleset.fixedScores[category as keyof Ruleset['fixedScores']];
+}

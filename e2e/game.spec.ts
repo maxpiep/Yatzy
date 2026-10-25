@@ -231,6 +231,11 @@ test('zweiter Kniffel: über das Kniffel-Feld oder den Knopf eintragen, Joker un
   await page.getByTestId('extra-kniffel-choose').click();
   await page.getByTestId('pick-fives').click();
   await expect(page.getByTestId('extra-kniffel')).toBeChecked();
+  await expect(page.getByTestId('confirm-pick')).toBeDisabled();
+  // Fünf Dreier zählen im Fünfer-Feld nichts, fünf Fünfer 25.
+  await page.getByTestId('face-3').click();
+  await expect(page.getByTestId('confirm-pick')).toHaveText('Feld streichen (0 Punkte)');
+  await page.getByTestId('face-5').click();
   await expect(page.getByTestId('confirm-pick')).toHaveText('25 Punkte eintragen');
   await page.getByTestId('confirm-pick').click();
   await expect(page.locator('.duel__score').first()).toContainText('125');
@@ -243,4 +248,14 @@ test('zweiter Kniffel: über das Kniffel-Feld oder den Knopf eintragen, Joker un
   await expect(page.getByTestId('confirm-pick')).toHaveText('40 Punkte eintragen');
   await page.getByTestId('confirm-pick').click();
   await expect(page.locator('.duel__score').first()).toContainText('215');
+
+  await enterScore(page, 'twos', 0); // Franzi
+
+  // Pasch/Chance: Augensumme statt Höchstwert (fünf Dreier = 15).
+  await page.getByTestId('extra-kniffel-start').click();
+  await page.getByTestId('pick-three_kind').click();
+  await page.getByTestId('face-3').click();
+  await expect(page.getByTestId('confirm-pick')).toHaveText('15 Punkte eintragen');
+  await page.getByTestId('confirm-pick').click();
+  await expect(page.locator('.duel__score').first()).toContainText('280');
 });

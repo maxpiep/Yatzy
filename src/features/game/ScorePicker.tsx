@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { CATEGORY_HINTS, CATEGORY_LABELS, type Category, type DieValue, type Scorecard } from '../../domain/types';
 import type { Ruleset } from '../../domain/rules/ruleset';
-import { extraKniffelAllowed, manualKind, manualOptions } from '../../domain/rules/manual';
+import { extraKniffelAllowed, jokerPoints, manualKind, manualOptions } from '../../domain/rules/manual';
 import { reasonSchema } from '../../domain/validation';
 import { Dialog } from '../../ui/Dialog';
 import { Button } from '../../ui/Button';
@@ -24,7 +24,7 @@ interface Props {
   /** Vorbelegung bei Korrekturen. */
   initial?: PickResult;
   correction?: boolean;
-  /** Weiterer Kniffel wurde angekündigt: Häkchen gesetzt, Höchstwert (Joker) vorgewählt. */
+  /** Weiterer Kniffel wurde angekündigt: Häkchen gesetzt, Punkte aus der Augenzahl berechnet. */
   presetExtra?: boolean;
   onClose: () => void;
   onSubmit: (result: PickResult) => Promise<void>;
@@ -35,10 +35,12 @@ export function ScorePicker({ category, playerName, ruleset, context, initial, c
   const kind = manualKind(category);
   const options = manualOptions(category, ruleset);
   const extraPossible = extraKniffelAllowed(category, context, ruleset);
-  const maxPoints = Math.max(...options.map((o) => o.points));
   const preset = Boolean(presetExtra && extraPossible);
-  const [points, setPoints] = useState<number | null>(initial?.points ?? (preset ? maxPoints : null));
+  // Feste Felder (Full House, Straßen) zählen beim Joker immer ihren Wert, sonst entscheidet die Augenzahl.
+  const fixedJoker = kind === 'fixed' ? jokerPoints(category, 1, ruleset) : null;
+  const [points, setPoints] = useState<number | null>(initial?.points ?? (preset ? fixedJoker : null));
   const [extra, setExtra] = useState(initial?.extraKniffel ?? preset);
+  const [jokerFace, setJokerFace] = useState<DieValue | null>(null);
   const [reason, setReason] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -131,15 +133,40 @@ export function ScorePicker({ category, playerName, ruleset, context, initial, c
             checked={extra}
             onChange={(e) => {
               setExtra(e.target.checked);
-              // Joker: bei einem weiteren Kniffel zählt die Höchstpunktzahl des Feldes.
-              if (e.target.checked) setPoints(maxPoints);
+              setJokerFace(null);
+              if (e.target.checked) setPoints(fixedJoker);
             }}
             data-testid="extra-kniffel"
           />
           <span>
-            <strong>Das war ein weiterer Kniffel</strong> – +{ruleset.extraKniffelBonus} Zusatzpunkte. Joker: jedes freie Feld darf mit seiner Höchstpunktzahl belegt werden.
+            <strong>Das war ein weiterer Kniffel</strong> – +{ruleset.extraKniffelBonus} Zusatzpunkte. Joker: Full House und Straßen zählen ihren vollen Wert, Pasch und Chance die Augensumme, oben zählt nur das passende Feld.
           </span>
         </label>
+      )}
+
+      {extraAllowed && extra && kind !== 'fixed' && (
+        <div className="picker" role="radiogroup" aria-label="Augenzahl des Kniffels">
+          <p className="picker__q">Welche Augenzahl hat der Kniffel?</p>
+          <div className="picker__grid picker__grid--faces">
+            {([1, 2, 3, 4, 5, 6] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                role="radio"
+                aria-checked={jokerFace === f}
+                className={`picker__opt ${jokerFace === f ? 'picker__opt--on' : ''}`}
+                onClick={() => {
+                  setJokerFace(f);
+                  setPoints(jokerPoints(category, f, ruleset));
+                }}
+                data-testid={`face-${f}`}
+                aria-label={`Fünfmal ${f}: ${jokerPoints(category, f, ruleset)} Punkte`}
+              >
+                <DiceFace value={f} size="sm" />
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       {correction && (
