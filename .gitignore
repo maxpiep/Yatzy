@@ -158,8 +158,8 @@ dist
 !.env.example
 !.env.server
 !.env.pages
-dist-server
-data/
+/dist-server
+/data/
 test-results
 playwright-report
 *.tsbuildinfo
