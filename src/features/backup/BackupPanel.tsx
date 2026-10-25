@@ -7,7 +7,7 @@ import { Button } from '../../ui/Button';
 
 /** Datensicherung für den Ein-Gerät-Modus: Export als Datei, Import mit Bestätigung. */
 export function BackupPanel() {
-  const { backend, refresh } = useClub();
+  const { backend } = useClub();
   const { notify } = useToast();
   const file = useRef<HTMLInputElement>(null);
   const [persisted, setPersisted] = useState<boolean | null>(null);
@@ -41,8 +41,8 @@ export function BackupPanel() {
     try {
       const res = backend.importData(await f.text());
       notify(`Wiederhergestellt: ${res.games} Partien, ${res.ledger} Kassenbuchungen`, 'success');
-      await refresh();
-      window.location.reload();
+      // Neu starten, damit alle Ansichten den wiederhergestellten Stand laden – direkt auf der Übersicht.
+      window.location.assign(import.meta.env.BASE_URL);
     } catch (e) {
       notify(toBackendError(e).message, 'error');
     }

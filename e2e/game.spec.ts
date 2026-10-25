@@ -139,7 +139,7 @@ test('Datensicherung lässt sich herunterladen und wiederherstellen', async ({ p
   await page.goto('/einstellungen');
   page.once('dialog', (d) => void d.accept());
   await page.getByTestId('backup-import').setInputFiles(path);
-  await page.waitForLoadState('load');
-  await page.goto('/');
+  // Die App lädt nach der Wiederherstellung selbst die Übersicht neu.
+  await page.waitForURL((url) => url.pathname === '/');
   await expect(page.getByTestId('live-game')).toBeVisible();
 });
