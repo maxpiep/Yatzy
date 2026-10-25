@@ -28,7 +28,7 @@
   --die-size: 40px;
 }
 .die--lg {
-  --die-size: clamp(52px, 15vw, 68px);
+  --die-size: clamp(44px, 13vw, 64px);
 }
 .die--empty {
   background: transparent;
@@ -217,10 +217,20 @@
   --btn-fg: #1b2231;
 }
 .scorebar__actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--s-2);
-  flex-wrap: wrap;
 }
-.scorebar__actions .btn {
-  flex: 1 1 8rem;
+.scorebar__actions .btn--primary {
+  grid-column: 1 / -1;
+  order: -1;
+}
+@media (min-width: 640px) {
+  .scorebar__actions {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .scorebar__actions .btn--primary {
+    order: 0;
+  }
 }

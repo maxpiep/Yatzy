@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { usePreferences } from '../state/preferences';
 
@@ -9,44 +9,48 @@ interface Props {
   className?: string;
 }
 
-/** Zählt von der letzten Anzeige zum neuen Wert hoch. Der Endwert steht immer sofort im DOM-Text bereit (Screenreader). */
-export function CountUp({ value, format = (v) => String(Math.round(v)), duration = 0.8, className }: Props) {
+const defaultFormat = (v: number) => String(Math.round(v));
+
+/**
+ * Zählt von der letzten Anzeige zum neuen Wert hoch. Der sichtbare Text wird ausschließlich
+ * von GSAP gesetzt; Screenreader erhalten immer sofort den Endwert.
+ */
+export function CountUp({ value, format = defaultFormat, duration = 0.8, className }: Props) {
   const ref = useRef<HTMLSpanElement>(null);
-  const shown = useRef(0);
+  const shown = useRef<number | null>(null);
   const { reducedMotion } = usePreferences();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (reducedMotion) {
+    const from = shown.current ?? 0;
+    if (reducedMotion || from === value) {
       el.textContent = format(value);
       shown.current = value;
       return;
     }
-    const state = { v: shown.current };
+    const state = { v: from };
+    el.textContent = format(from);
     const tween = gsap.to(state, {
       v: value,
       duration,
       ease: 'power2.out',
       onUpdate: () => {
+        shown.current = state.v;
         el.textContent = format(state.v);
       },
       onComplete: () => {
         shown.current = value;
-        el.textContent = format(value);
       },
     });
     return () => {
       tween.kill();
-      shown.current = value;
     };
   }, [value, duration, format, reducedMotion]);
 
   return (
     <span className={className}>
-      <span ref={ref} aria-hidden="true">
-        {format(reducedMotion ? value : shown.current)}
-      </span>
+      <span ref={ref} aria-hidden="true" />
       <span className="sr-only">{format(value)}</span>
     </span>
   );

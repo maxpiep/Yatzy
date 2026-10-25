@@ -102,7 +102,8 @@ export function ClubProvider({ children, choice }: { children: ReactNode; choice
   useEffect(() => {
     if (!backend || !roomId || phase.kind !== 'ready') return;
     writeLocal(ROOM_KEY, roomId);
-    setSnapshot((s) => (s?.room.id === roomId ? s : null));
+    // refresh() setzt den State erst nach dem asynchronen Laden – kein synchroner Render-Kaskadeneffekt.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh();
     const unsubscribe = backend.subscribe(roomId, () => void refresh(), setConnection);
     const onVisible = () => {

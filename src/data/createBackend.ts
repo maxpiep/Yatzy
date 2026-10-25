@@ -1,4 +1,5 @@
 import type { Backend } from './backend';
+import { readLocal } from '../lib/storage';
 import { LocalBackend } from './localBackend';
 import { SupabaseBackend } from './supabaseBackend';
 import { getSupabaseClient, readSupabaseConfig } from './supabaseClient';
@@ -14,12 +15,7 @@ export function chooseBackend(env: Record<string, string | undefined> = import.m
   const forcedLocal = env.VITE_BACKEND_MODE === 'local';
   const config = readSupabaseConfig(env);
   if (!forcedLocal && config) return { kind: 'ready', backend: new SupabaseBackend(getSupabaseClient(config)) };
-  let accepted = false;
-  try {
-    accepted = window.localStorage.getItem(LOCAL_MODE_KEY) === '1';
-  } catch {
-    accepted = false;
-  }
+  const accepted = readLocal(LOCAL_MODE_KEY) === '1';
   if (forcedLocal || accepted) return { kind: 'ready', backend: new LocalBackend() };
   return { kind: 'unconfigured' };
 }

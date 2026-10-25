@@ -158,6 +158,12 @@
 .page {
   display: grid;
   gap: var(--s-6);
+  min-width: 0;
+}
+.page > *,
+.grid-2 > *,
+.game-layout > * {
+  min-width: 0;
 }
 .page-head {
   display: flex;

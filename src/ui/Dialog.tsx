@@ -29,9 +29,11 @@ export function Dialog({ open, title, description, onClose, locked, wide, childr
   const lastFocus = useRef<HTMLElement | null>(null);
   const { reducedMotion } = usePreferences();
   const lockedRef = useRef(locked);
-  lockedRef.current = locked;
   const closeRef = useRef(onClose);
-  closeRef.current = onClose;
+  useEffect(() => {
+    lockedRef.current = locked;
+    closeRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;

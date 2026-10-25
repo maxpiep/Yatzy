@@ -195,7 +195,7 @@ export function DiceInput({ rolls, maxRolls, disabled, onConfirm }: Props) {
         <>
           <div className="dicepad" role="group" aria-label="Augenzahl wählen">
             {([1, 2, 3, 4, 5, 6] as DieValue[]).map((v) => (
-              <button key={v} type="button" onClick={() => setValue(v)} disabled={disabled || busy || (complete && active === null)} aria-label={`Augenzahl ${v}`} data-testid={`pad-${v}`}>
+              <button key={v} type="button" onClick={() => setValue(v)} disabled={disabled || busy} aria-label={`Augenzahl ${v}`} data-testid={`pad-${v}`}>
                 <DiceFace value={v} size="sm" />
                 <span aria-hidden="true">{v}</span>
               </button>

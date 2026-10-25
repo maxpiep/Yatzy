@@ -83,10 +83,10 @@ export function computeStatistics(games: readonly Game[], playerIds: readonly st
         running[id] = 0;
       }
     }
+    const prev = current as ClubStats['currentStreak'];
     if (g.isDraw || !g.winnerPlayerId) current = null;
-    else current = current?.playerId === g.winnerPlayerId
-      ? { playerId: current.playerId, length: current.length + 1 }
-      : { playerId: g.winnerPlayerId, length: 1 };
+    else if (prev && prev.playerId === g.winnerPlayerId) current = { playerId: prev.playerId, length: prev.length + 1 };
+    else current = { playerId: g.winnerPlayerId, length: 1 };
   }
 
   for (const id of playerIds) {

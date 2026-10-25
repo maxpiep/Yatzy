@@ -58,7 +58,7 @@ function ActiveGame() {
   const selected = selection?.key === turnKey ? selection.category : null;
   const currentId = view.currentPlayerId;
   const currentName = game.players.find((p) => p.id === currentId)?.displayName ?? '';
-  const currentCard = currentId ? view.scorecards[currentId] ?? {} : {};
+  const currentCard = useMemo(() => (currentId ? (view.scorecards[currentId] ?? {}) : {}), [currentId, view.scorecards]);
 
   const previews = useMemo(() => {
     if (!view.lastRoll || !currentId) return undefined;

@@ -100,6 +100,11 @@
   box-shadow: var(--sh-1);
   padding: var(--s-6);
 }
+@media (max-width: 480px) {
+  .panel {
+    padding: var(--s-4);
+  }
+}
 .panel--flush {
   padding: 0;
   overflow: hidden;
@@ -484,6 +489,7 @@
 
 /* ---------- Tabellen ---------- */
 .table-wrap {
+  position: relative;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }

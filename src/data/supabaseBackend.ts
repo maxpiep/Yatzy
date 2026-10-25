@@ -118,7 +118,7 @@ export class SupabaseBackend implements Backend {
       active = { game: activeGame, rolls: (rolls as DbRoll[]).map(mapRoll), scores: (scores as DbScore[]).map(mapScore) };
     }
     return {
-      room: mapRoom(room as DbRoom, (membership as { role: Room['role'] }).role),
+      room: mapRoom(room as unknown as DbRoom, (membership as unknown as { role: Room["role"] }).role),
       players: (players as DbPlayer[]).map(mapPlayer),
       games: mappedGames,
       active,
@@ -139,7 +139,7 @@ export class SupabaseBackend implements Backend {
       unwrap(this.sb.from('cash_ledger').select('*').eq('game_id', gameId).order('created_at')),
     ]);
     return {
-      game: mapGame(game as DbGame),
+      game: mapGame(game as unknown as DbGame),
       rolls: (rolls as DbRoll[]).map(mapRoll),
       scores: (scores as DbScore[]).map(mapScore),
       corrections: (corrections as DbCorrection[]).map(mapCorrection),

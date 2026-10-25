@@ -92,7 +92,7 @@ export async function expectKcError(promise: Promise<unknown>, code: string): Pr
     await promise;
   } catch (e) {
     const actual = kcCode(e);
-    if (actual !== code) throw new Error(`Erwartet kc_error:${code}, erhalten: ${(e as Error).message}`);
+    if (actual !== code) throw new Error(`Erwartet kc_error:${code}, erhalten: ${(e as Error).message}`, { cause: e });
     return;
   }
   throw new Error(`Erwartet kc_error:${code}, aber der Aufruf war erfolgreich.`);

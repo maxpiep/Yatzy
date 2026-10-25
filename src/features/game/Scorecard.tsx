@@ -168,7 +168,7 @@ export function Scorecard({ game, players, scorecards, totals, currentPlayerId, 
   );
 
   return (
-    <div className="panel panel--flush">
+    <div className="panel panel--flush scorecard-panel">
       <table className="scorecard">
         <caption className="sr-only">{caption ?? 'Wertungsblock'}</caption>
         <colgroup>
