@@ -24,21 +24,26 @@ interface Props {
   /** Vorbelegung bei Korrekturen. */
   initial?: PickResult;
   correction?: boolean;
+  /** Weiterer Kniffel wurde angekündigt: Häkchen gesetzt, Höchstwert (Joker) vorgewählt. */
+  presetExtra?: boolean;
   onClose: () => void;
   onSubmit: (result: PickResult) => Promise<void>;
 }
 
 /** Feld antippen → Wert wählen → bestätigen. Wie das Eintragen auf dem Papierblock. */
-export function ScorePicker({ category, playerName, ruleset, context, initial, correction, onClose, onSubmit }: Props) {
+export function ScorePicker({ category, playerName, ruleset, context, initial, correction, presetExtra, onClose, onSubmit }: Props) {
   const kind = manualKind(category);
   const options = manualOptions(category, ruleset);
-  const [points, setPoints] = useState<number | null>(initial?.points ?? null);
-  const [extra, setExtra] = useState(initial?.extraKniffel ?? false);
+  const extraPossible = extraKniffelAllowed(category, context, ruleset);
+  const maxPoints = Math.max(...options.map((o) => o.points));
+  const preset = Boolean(presetExtra && extraPossible);
+  const [points, setPoints] = useState<number | null>(initial?.points ?? (preset ? maxPoints : null));
+  const [extra, setExtra] = useState(initial?.extraKniffel ?? preset);
   const [reason, setReason] = useState('');
   const [confirmed, setConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const extraAllowed = extraKniffelAllowed(category, context, ruleset);
+  const extraAllowed = extraPossible;
   const face = FACE[category];
   const reasonOk = !correction || reasonSchema.safeParse(reason).success;
   const canSubmit = points !== null && reasonOk && (!correction || confirmed) && !busy;
@@ -121,7 +126,16 @@ export function ScorePicker({ category, playerName, ruleset, context, initial, c
 
       {extraAllowed && (
         <label className="check notice notice--brass">
-          <input type="checkbox" checked={extra} onChange={(e) => setExtra(e.target.checked)} data-testid="extra-kniffel" />
+          <input
+            type="checkbox"
+            checked={extra}
+            onChange={(e) => {
+              setExtra(e.target.checked);
+              // Joker: bei einem weiteren Kniffel zählt die Höchstpunktzahl des Feldes.
+              if (e.target.checked) setPoints(maxPoints);
+            }}
+            data-testid="extra-kniffel"
+          />
           <span>
             <strong>Das war ein weiterer Kniffel</strong> – +{ruleset.extraKniffelBonus} Zusatzpunkte. Joker: jedes freie Feld darf mit seiner Höchstpunktzahl belegt werden.
           </span>

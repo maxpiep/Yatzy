@@ -11,6 +11,7 @@ import { PlayerAvatar, playerStyle } from '../../ui/PlayerChip';
 import { CountUp } from '../../motion/CountUp';
 import { Scorecard } from './Scorecard';
 import { ScorePicker } from './ScorePicker';
+import { Dialog } from '../../ui/Dialog';
 import { FinishDialog } from './FinishDialog';
 import { CancelGameDialog } from './CancelGameDialog';
 
@@ -47,6 +48,9 @@ function ActiveGame() {
   const ruleset = getRuleset(game.rulesetId, game.rulesetVersion);
 
   const [picking, setPicking] = useState<Category | null>(null);
+  // Weiterer Kniffel: gilt nur für den Zug, in dem er angekündigt wurde.
+  const [extraTurn, setExtraTurn] = useState<number | null>(null);
+  const [kniffelChoice, setKniffelChoice] = useState(false);
   const [editing, setEditing] = useState<{ playerId: string; category: Category } | null>(null);
   const [finishing, setFinishing] = useState(false);
   const [cancelling, setCancelling] = useState(false);
@@ -56,6 +60,9 @@ function ActiveGame() {
   const currentCard = useMemo(() => (currentId ? (view.scorecards[currentId] ?? {}) : {}), [currentId, view.scorecards]);
   const corrected = useMemo(() => new Set(scores.filter((s) => s.correctionCount > 0).map((s) => `${s.playerId}:${s.category}`)), [scores]);
   const turnInRound = Math.min(game.currentTurn, TOTAL_TURNS);
+  const ownKniffel = currentCard.kniffel;
+  const canExtra = ownKniffel?.kind === 'scored' && ownKniffel.points === ruleset.fixedScores.kniffel;
+  const extraMode = canExtra && extraTurn === game.currentTurn;
   const nextName = game.currentTurn < TOTAL_TURNS ? game.players.find((p) => p.id !== currentId)?.displayName : null;
 
   const editEntry = editing ? view.scorecards[editing.playerId]?.[editing.category] : undefined;
@@ -114,8 +121,20 @@ function ActiveGame() {
           <div>
             <strong data-testid="current-player">{currentName}</strong> ist am Zug
             <span className="subtle" style={{ display: 'block' }}>
-              Würfeln, dann in der Spalte von {currentName} auf das passende Feld tippen.
+              {extraMode
+                ? 'Weiterer Kniffel: jetzt auf ein freies Feld tippen – es zählt die Höchstpunktzahl, dazu +50 Zusatzpunkte.'
+                : `Würfeln, dann in der Spalte von ${currentName} auf das passende Feld tippen.`}
             </span>
+            {canExtra && !extraMode && (
+              <button type="button" className="btn btn--sm" style={{ marginTop: 'var(--s-2)' }} onClick={() => setExtraTurn(game.currentTurn)} data-testid="extra-kniffel-start">
+                Weiteren Kniffel gewürfelt?
+              </button>
+            )}
+            {extraMode && (
+              <button type="button" className="btn btn--sm btn--ghost" style={{ marginTop: 'var(--s-2)' }} onClick={() => setExtraTurn(null)}>
+                Doch kein Kniffel
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -128,7 +147,11 @@ function ActiveGame() {
           totals={view.totals}
           currentPlayerId={currentId}
           onSelect={view.isComplete ? undefined : (category) => setPicking(category)}
-          onEdit={(playerId, category) => setEditing({ playerId, category })}
+          onEdit={(playerId, category) => {
+            // Eigenes Kniffel-Feld im eigenen Zug antippen: meist ist ein weiterer Kniffel gemeint.
+            if (category === 'kniffel' && playerId === currentId && !view.isComplete) setKniffelChoice(true);
+            else setEditing({ playerId, category });
+          }}
           corrected={corrected}
           caption={`Wertungsblock – ${game.players.map((p) => p.displayName).join(' gegen ')}`}
         />
@@ -149,6 +172,7 @@ function ActiveGame() {
           playerName={currentName}
           ruleset={ruleset}
           context={currentCard}
+          presetExtra={extraMode}
           onClose={() => setPicking(null)}
           onSubmit={async ({ points, extraKniffel }) => {
             await run((b) => b.scoreManual(game.id, game.version, game.currentTurn, picking, points, extraKniffel), {
@@ -157,6 +181,50 @@ function ActiveGame() {
             });
           }}
         />
+      )}
+
+      {kniffelChoice && currentId && (
+        <Dialog
+          open
+          title={`Kniffel · ${currentName}`}
+          description={
+            canExtra
+              ? 'Das Kniffel-Feld ist schon mit 50 belegt. Einen weiteren Kniffel tragt ihr in ein freies Feld ein: Es zählt dessen Höchstpunktzahl, dazu kommen 50 Zusatzpunkte.'
+              : 'Das Kniffel-Feld ist gestrichen. Nach den Regeln gibt es für einen weiteren Kniffel dann keine Zusatzpunkte – tragt den Wurf einfach in ein anderes freies Feld ein (z. B. Fünfer oder Chance).'
+          }
+          onClose={() => setKniffelChoice(false)}
+          footer={
+            <>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setKniffelChoice(false);
+                  setEditing({ playerId: currentId, category: 'kniffel' });
+                }}
+              >
+                Kniffel-Feld korrigieren
+              </Button>
+              {canExtra ? (
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setKniffelChoice(false);
+                    setExtraTurn(game.currentTurn);
+                  }}
+                  data-testid="extra-kniffel-choose"
+                >
+                  Weiteren Kniffel eintragen
+                </Button>
+              ) : (
+                <Button variant="primary" onClick={() => setKniffelChoice(false)}>
+                  Verstanden
+                </Button>
+              )}
+            </>
+          }
+        >
+          <span />
+        </Dialog>
       )}
 
       {editing && editEntry && (

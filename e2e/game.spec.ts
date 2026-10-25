@@ -215,3 +215,32 @@ test('Direkteingabe: nur mögliche Werte, Abbrechen trägt nichts ein, Zusatz-Kn
   await page.getByTestId('confirm-pick').click();
   await expect(page.locator('.duel__score').nth(1)).toContainText('24');
 });
+
+test('zweiter Kniffel: über das Kniffel-Feld oder den Knopf eintragen, Joker und +50', async ({ page }) => {
+  await createClub(page);
+  await page.getByTestId('open-start').click();
+  await page.getByTestId('stake-100').click();
+  await page.getByTestId('confirm-start').click();
+  await expect(page.getByTestId('game-stake')).toBeVisible();
+
+  await enterScore(page, 'kniffel', 50); // Maxi
+  await enterScore(page, 'chance', 20); // Franzi
+
+  // Weg 1: Maxi tippt auf sein belegtes Kniffel-Feld.
+  await page.locator('[data-testid$="-kniffel"] button').first().click();
+  await page.getByTestId('extra-kniffel-choose').click();
+  await page.getByTestId('pick-fives').click();
+  await expect(page.getByTestId('extra-kniffel')).toBeChecked();
+  await expect(page.getByTestId('confirm-pick')).toHaveText('25 Punkte eintragen');
+  await page.getByTestId('confirm-pick').click();
+  await expect(page.locator('.duel__score').first()).toContainText('125');
+
+  await enterScore(page, 'ones', 0); // Franzi
+
+  // Weg 2: Knopf „Weiteren Kniffel gewürfelt?“.
+  await page.getByTestId('extra-kniffel-start').click();
+  await page.getByTestId('pick-large_straight').click();
+  await expect(page.getByTestId('confirm-pick')).toHaveText('40 Punkte eintragen');
+  await page.getByTestId('confirm-pick').click();
+  await expect(page.locator('.duel__score').first()).toContainText('215');
+});
