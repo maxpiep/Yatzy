@@ -70,6 +70,10 @@ export class ServerBackend implements Backend {
   scoreTurn = (gameId: string, v: number, turn: number, category: Category, strike: boolean) => this.call<Game>('scoreTurn', [gameId, v, turn, category, strike]);
   correctScore = (gameId: string, v: number, playerId: string, category: Category, dice: number[], strike: boolean, reason: string) =>
     this.call<Game>('correctScore', [gameId, v, playerId, category, dice, strike, reason]);
+  scoreManual = (gameId: string, v: number, turn: number, category: Category, points: number, extra: boolean) =>
+    this.call<Game>('scoreManual', [gameId, v, turn, category, points, extra]);
+  correctManual = (gameId: string, v: number, playerId: string, category: Category, points: number, extra: boolean, reason: string) =>
+    this.call<Game>('correctManual', [gameId, v, playerId, category, points, extra, reason]);
   finishGame = (gameId: string) => this.call<Game>('finishGame', [gameId]);
   cancelGame = (gameId: string, reason: string) => this.call<Game>('cancelGame', [gameId, reason]);
   recordPayment = (roomId: string, playerId: string, cents: number, note: string | null, key: string) =>

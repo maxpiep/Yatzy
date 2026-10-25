@@ -33,7 +33,9 @@ eine angepasste React-Bits-Komponente (`AnimatedContent`) · Vitest + Testing Li
 
 ## So wird gespielt: ein Gerät, echte Würfel
 
-Ihr würfelt mit echten Würfeln am Tisch und tragt jeden Wurf auf **einem gemeinsamen Gerät** ein (Handy oder
+Ihr würfelt mit echten Würfeln am Tisch und tragt das Ergebnis wie auf dem Papierblock ein: **Feld antippen,
+Wert wählen, bestätigen** – z. B. „Einser“ → „3×“ = 3 Punkte, „Dreierpasch“ → Summe 5–30, „Full House“ → 25,
+oder „Streichen (0)“. Eine Würfeleingabe ist nicht nötig. Gespielt wird auf **einem gemeinsamen Gerät** (Handy oder
 Tablet, das weitergereicht wird). Die App ist ohne Server, Supabase oder Vercel nutzbar:
 
 - **Online:** https://maxpiep.github.io/Yatzy/ – wird bei jedem Push auf `main` automatisch per GitHub Pages

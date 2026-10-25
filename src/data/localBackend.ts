@@ -3,6 +3,7 @@ import { buildScorecard, determineOutcome, playerIdForTurn, TOTAL_TURNS } from '
 import { getRuleset, DEFAULT_RULESET } from '../domain/rules/ruleset';
 import { calculateScore, computeTotals, isKniffel, RuleError, strikeScore, validateDice } from '../domain/rules/scoring';
 import { TurnError, validateNextRoll } from '../domain/rules/turn';
+import { manualScore } from '../domain/rules/manual';
 import { isValidStake, MAX_AMOUNT_CENTS, formatCents } from '../domain/money';
 import type { Backend, ConnectionStatus, CreatedRoom, GameDetail, Member, RoomSnapshot } from './backend';
 import { BackendError } from './errors';
@@ -466,6 +467,97 @@ export class LocalBackend implements Backend {
       }
       g.version++;
       this.log(s, g.id, 'score_corrected', { player_id: playerId, category, old_points: oldPoints, new_points: result.points, reason: r });
+      return mapGame(g);
+    });
+  }
+
+  async scoreManual(gameId: string, expectedVersion: number, turnNo: number, category: Category, points: number, extraKniffel: boolean): Promise<Game> {
+    return this.transact((s) => {
+      const g = this.lockGame(s, gameId, expectedVersion);
+      if (g.current_turn > TOTAL_TURNS || turnNo !== g.current_turn) fail('wrong_turn');
+      if (!(CATEGORIES as readonly string[]).includes(category)) fail('invalid_category');
+      const ruleset = getRuleset(g.ruleset_id, g.ruleset_version);
+      const playerId = this.turnPlayer(s, g, g.current_turn);
+      const card = buildScorecard(s.scores.filter((x) => x.game_id === g.id).map(mapScore), playerId);
+      const result = manualScore(category, points, extraKniffel, card, ruleset);
+      s.scores.push({
+        id: ++s.seq,
+        game_id: g.id,
+        player_id: playerId,
+        category,
+        kind: result.points === 0 ? 'struck' : 'scored',
+        points: result.points,
+        dice: [],
+        joker: result.joker,
+        strike_requested: result.points === 0,
+        kniffel_bonus: result.kniffelBonus,
+        turn_no: g.current_turn,
+        created_at: now(),
+        corrected_at: null,
+        correction_count: 0,
+      });
+      g.current_turn++;
+      g.version++;
+      this.log(s, g.id, 'category_scored', {
+        turn_no: turnNo,
+        player_id: playerId,
+        category,
+        points: result.points,
+        joker: result.joker,
+        kniffel_bonus: result.kniffelBonus,
+        struck: result.points === 0,
+        manual: true,
+      });
+      return mapGame(g);
+    });
+  }
+
+  async correctManual(
+    gameId: string,
+    expectedVersion: number,
+    playerId: string,
+    category: Category,
+    points: number,
+    extraKniffel: boolean,
+    reason: string,
+  ): Promise<Game> {
+    return this.transact((s) => {
+      const g = this.lockGame(s, gameId, expectedVersion);
+      const r = reason.trim();
+      if (r.length < 3 || r.length > 300) fail('reason_required');
+      const row = s.scores.find((x) => x.game_id === g.id && x.player_id === playerId && x.category === category);
+      if (!row) return fail('score_not_found');
+      const ruleset = getRuleset(g.ruleset_id, g.ruleset_version);
+      const own = s.scores.filter((x) => x.game_id === g.id && x.player_id === playerId);
+      // Wird das Kniffel-Feld von 50 weggeändert, dürfen keine späteren Zusatz-Kniffel daran hängen.
+      if (category === 'kniffel' && points !== ruleset.fixedScores.kniffel && own.some((x) => x.turn_no > row.turn_no && x.kniffel_bonus > 0)) {
+        fail('correction_conflict');
+      }
+      const context = buildScorecard(own.filter((x) => x.category === 'kniffel' && x.turn_no < row.turn_no).map(mapScore), playerId);
+      const result = manualScore(category, points, extraKniffel, context, ruleset, { ignoreTaken: true });
+      s.corrections.push({
+        id: ++s.seq,
+        score_id: row.id,
+        game_id: g.id,
+        player_id: playerId,
+        category,
+        old_value: { points: row.points, kind: row.kind },
+        new_value: { points: result.points, kind: result.points === 0 ? 'struck' : 'scored' },
+        reason: r,
+        created_at: now(),
+      });
+      const oldPoints = row.points;
+      Object.assign(row, {
+        points: result.points,
+        kind: result.points === 0 ? 'struck' : 'scored',
+        joker: result.joker,
+        strike_requested: result.points === 0,
+        kniffel_bonus: result.kniffelBonus,
+        corrected_at: now(),
+        correction_count: row.correction_count + 1,
+      });
+      g.version++;
+      this.log(s, g.id, 'score_corrected', { player_id: playerId, category, old_points: oldPoints, new_points: result.points, reason: r, manual: true });
       return mapGame(g);
     });
   }

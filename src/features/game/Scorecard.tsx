@@ -94,6 +94,19 @@ function ScoreCell({
         {value}
       </span>
     );
+  } else if (isCurrent && !preview && onSelect) {
+    // Direkteingabe: offenes Feld des Spielers am Zug antippen, Wert im Dialog wählen.
+    content = (
+      <button
+        type="button"
+        className="sc-btn sc-preview sc-preview--open"
+        onClick={() => onSelect(category)}
+        aria-label={`${label} für ${playerName} eintragen`}
+        data-testid={`pick-${category}`}
+      >
+        <span aria-hidden="true">+</span>
+      </button>
+    );
   } else if (isCurrent && preview && onSelect) {
     const zero = preview.points === 0;
     content = (

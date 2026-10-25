@@ -36,6 +36,23 @@ Grundlage ist die Spielanleitung von **Schmidt Spiele** (Kniffel, Art.-Nr. 49030
 - Nach jedem Zug muss genau ein freies Feld belegt werden – mit Punkten oder gestrichen (0).
 - Die Würfel einer Wertung stammen immer aus dem zuletzt **bestätigten** Serverwurf, nicht aus dem Client.
 
+## Eintragen (Direkteingabe)
+
+Gewürfelt wird mit echten Würfeln, eingetragen wird nur der Wert – wie auf dem Papierblock:
+
+| Feld | Mögliche Werte |
+| --- | --- |
+| Einser … Sechser | Anzahl 1–5 × Augenzahl (z. B. Dreier: 3, 6, 9, 12, 15) |
+| Dreierpasch, Viererpasch, Chance | Summe aller Würfel 5–30 |
+| Full House / Kleine Straße / Große Straße / Kniffel | 25 / 30 / 40 / 50 |
+| jedes Feld | 0 = Streichen |
+
+Ein **weiterer Kniffel** wird beim Eintragen über „Das war ein weiterer Kniffel“ markiert (nur möglich, wenn das
+Kniffel-Feld bereits 50 Punkte hat): +50 Zusatzpunkte, Joker-Werte sind in den Optionen enthalten.
+Implementierung: `src/domain/rules/manual.ts`, serverseitig `private.kc_manual_valid` und `public.score_manual` /
+`public.correct_manual` (Migration `20261025120000_manual_scoring.sql`); ein Test prüft, dass TypeScript und SQL
+exakt dieselben Werte erlauben. Die frühere würfelbasierte Wertung bleibt im Backend erhalten.
+
 ## Wertung
 
 | Feld | Wertung |

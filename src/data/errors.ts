@@ -24,6 +24,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   invalid_category: 'Unbekanntes Wertungsfeld.',
   category_taken: 'Dieses Feld ist bereits belegt.',
   score_not_found: 'Diese Wertung wurde nicht gefunden.',
+  correction_conflict: 'Das Kniffel-Feld kann so nicht korrigiert werden, weil spätere Zusatz-Kniffel (+50) davon abhängen. Bitte zuerst diese korrigieren.',
   reason_required: 'Bitte gib einen Grund mit mindestens 3 Zeichen an.',
   invalid_amount: 'Bitte gib einen gültigen Betrag an (0,01 € bis 10.000 €).',
   invalid_note: 'Die Notiz ist zu lang.',

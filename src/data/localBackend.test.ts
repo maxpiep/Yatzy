@@ -144,3 +144,35 @@ describe('LocalBackend – Datensicherung', () => {
     expect(() => b.importData(JSON.stringify(tampered))).toThrow(BackendError);
   });
 });
+
+describe('LocalBackend – Direkteingabe', () => {
+  it('trägt Werte ein, prüft mögliche Werte und Zusatz-Kniffel, rechnet ab', async () => {
+    const { b, roomId, maxi, franzi } = await setup();
+    let g = await b.createGame(roomId, 200, crypto.randomUUID());
+    expect(await code(b.scoreManual(g.id, g.version, 1, 'ones', 7, false))).toBe('invalid_dice');
+    expect(await code(b.scoreManual(g.id, g.version, 1, 'fives', 25, true))).toBe('invalid_dice');
+    for (let turn = 1; turn <= 26; turn++) {
+      const cat = CATEGORIES[Math.floor((turn - 1) / 2)]!;
+      const pid = turn % 2 === 1 ? g.startingPlayerId : g.players.find((p) => p.id !== g.startingPlayerId)!.id;
+      const pts = pid === maxi.id ? ({ ones: 5, kniffel: 50, chance: 30 } as Record<string, number>)[cat] ?? 0 : 0;
+      g = await b.scoreManual(g.id, g.version, turn, cat, pts, false);
+    }
+    const done = await b.finishGame(g.id);
+    expect(done.finalScores![maxi.id]).toBe(85);
+    expect(done.winnerPlayerId).toBe(maxi.id);
+    const ledger = (await b.getRoomSnapshot(roomId)).ledger;
+    expect(ledger[0]).toMatchObject({ playerId: franzi.id, amountCents: 200 });
+  });
+
+  it('Korrektur: Kniffel-Feld mit abhängigem Zusatz-Kniffel wird abgelehnt', async () => {
+    const { b, roomId } = await setup();
+    let g = await b.createGame(roomId, 100, crypto.randomUUID());
+    g = await b.scoreManual(g.id, g.version, 1, 'kniffel', 50, false);
+    g = await b.scoreManual(g.id, g.version, 2, 'chance', 20, false);
+    g = await b.scoreManual(g.id, g.version, 3, 'fives', 25, true);
+    expect(await code(b.correctManual(g.id, g.version, g.startingPlayerId, 'kniffel', 0, false, 'Tippfehler'))).toBe('correction_conflict');
+    g = await b.correctManual(g.id, g.version, g.startingPlayerId, 'fives', 15, false, 'kein Kniffel');
+    const s = (await b.getGameDetail(g.id)).scores.find((x) => x.category === 'fives')!;
+    expect(s).toMatchObject({ points: 15, kniffelBonus: 0, correctionCount: 1 });
+  });
+});

@@ -215,6 +215,41 @@ export class SupabaseBackend implements Backend {
     );
   }
 
+  async scoreManual(gameId: string, expectedVersion: number, turnNo: number, category: Category, points: number, extraKniffel: boolean): Promise<Game> {
+    return mapGame(
+      await this.rpc<DbGame>('score_manual', {
+        p_game_id: gameId,
+        p_expected_version: expectedVersion,
+        p_turn_no: turnNo,
+        p_category: category,
+        p_points: points,
+        p_extra_kniffel: extraKniffel,
+      }),
+    );
+  }
+
+  async correctManual(
+    gameId: string,
+    expectedVersion: number,
+    playerId: string,
+    category: Category,
+    points: number,
+    extraKniffel: boolean,
+    reason: string,
+  ): Promise<Game> {
+    return mapGame(
+      await this.rpc<DbGame>('correct_manual', {
+        p_game_id: gameId,
+        p_expected_version: expectedVersion,
+        p_player_id: playerId,
+        p_category: category,
+        p_points: points,
+        p_extra_kniffel: extraKniffel,
+        p_reason: reason,
+      }),
+    );
+  }
+
   async finishGame(gameId: string): Promise<Game> {
     return mapGame(await this.rpc<DbGame>('finish_game', { p_game_id: gameId }));
   }

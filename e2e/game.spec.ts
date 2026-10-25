@@ -1,19 +1,20 @@
 import { expect, test, type Page } from '@playwright/test';
 
+// Beste Werte je Feld (Maxi); Franzi streicht immer → Franzi verliert.
 const CATEGORIES = [
-  ['ones', [1, 1, 1, 2, 3]],
-  ['twos', [2, 2, 2, 1, 3]],
-  ['threes', [3, 3, 3, 1, 2]],
-  ['fours', [4, 4, 4, 1, 2]],
-  ['fives', [5, 5, 5, 1, 2]],
-  ['sixes', [6, 6, 6, 1, 2]],
-  ['three_kind', [6, 6, 6, 5, 5]],
-  ['four_kind', [6, 6, 6, 6, 5]],
-  ['full_house', [2, 2, 3, 3, 3]],
-  ['small_straight', [1, 2, 3, 4, 6]],
-  ['large_straight', [2, 3, 4, 5, 6]],
-  ['kniffel', [4, 4, 4, 4, 4]],
-  ['chance', [6, 6, 5, 5, 4]],
+  ['ones', 3],
+  ['twos', 6],
+  ['threes', 9],
+  ['fours', 12],
+  ['fives', 15],
+  ['sixes', 18],
+  ['three_kind', 28],
+  ['four_kind', 29],
+  ['full_house', 25],
+  ['small_straight', 30],
+  ['large_straight', 40],
+  ['kniffel', 50],
+  ['chance', 27],
 ] as const;
 
 const PIN = '2580';
@@ -36,10 +37,12 @@ async function createClub(page: Page) {
   await expect(page.getByTestId('open-start')).toBeVisible();
 }
 
-async function enterRoll(page: Page, dice: readonly number[]) {
-  for (const v of dice) await page.getByTestId(`pad-${v}`).click();
-  await page.getByTestId('confirm-roll').click();
-  await expect(page.getByTestId('roll-state')).toContainText('Bestätigt');
+/** Feld antippen, Wert wählen, bestätigen – wie auf dem Papierblock. */
+async function enterScore(page: Page, category: string, points: number) {
+  await page.getByTestId(`pick-${category}`).click();
+  await page.getByTestId(`opt-${points}`).click();
+  await page.getByTestId('confirm-pick').click();
+  await expect(page.getByTestId('confirm-pick')).toHaveCount(0);
 }
 
 async function noHorizontalOverflow(page: Page) {
@@ -73,19 +76,15 @@ test('komplette Partie: Einsatz 5 €, Abschluss, Historie und Kasse', async ({ 
   await expect(page.getByTestId('game-stake')).toHaveText('Einsatz dieser Partie: 5,00 €');
   await noHorizontalOverflow(page);
 
-  for (const [category, good] of CATEGORIES) {
+  for (const [category, best] of CATEGORIES) {
     for (let i = 0; i < 2; i++) {
       const who = (await page.getByTestId('current-player').textContent())?.trim();
-      // Maxi würfelt gut, Franzi immer 1-1-2-2-3 (meist gestrichen) → Franzi verliert.
-      await enterRoll(page, who === 'Maxi' ? good : [1, 1, 2, 2, 3]);
+      await enterScore(page, category, who === 'Maxi' ? best : 0);
       if (category === 'ones' && i === 0) {
-        // Wiederaufnahme nach Reload: bestätigter Wurf bleibt erhalten.
+        // Wiederaufnahme nach Reload: der eingetragene Wert bleibt erhalten, Franzi ist dran.
         await page.reload();
-        await expect(page.getByTestId('roll-state')).toContainText('Bestätigt · Wurf 1 von 3');
+        await expect(page.getByTestId('current-player')).toHaveText('Franzi');
       }
-      await page.getByTestId(`pick-${category}`).click();
-      await page.getByTestId('confirm-score').click();
-      await expect(page.getByTestId('confirm-score')).toHaveCount(0);
     }
   }
 
@@ -127,10 +126,10 @@ test('zwei Tabs sehen denselben Spielstand', async ({ page, context }) => {
   const second = await context.newPage();
   await second.goto(url);
   await unlock(second);
-  await expect(second.getByTestId('roll-state')).toContainText('Entwurf · Wurf 1');
-  await enterRoll(page, [5, 5, 5, 5, 5]);
-  await expect(second.getByTestId('roll-state')).toContainText('Bestätigt · Wurf 1 von 3');
-  await expect(second.getByText('Kniffel!')).toBeVisible();
+  await expect(second.getByTestId('current-player')).toHaveText('Maxi');
+  await enterScore(page, 'kniffel', 50);
+  await expect(second.getByTestId('current-player')).toHaveText('Franzi');
+  await expect(second.locator('[data-testid$="-kniffel"]').first()).toContainText('50');
 });
 
 test('Direktaufruf einer unbekannten Seite zeigt eine Fehlerseite', async ({ page }) => {
@@ -179,4 +178,40 @@ test('PIN-Sperre: ohne richtige PIN kein Zugriff, Sperren-Knopf und Fehlversuche
   // Die PIN steht nirgends im Klartext im Speicher.
   const dump = await other.evaluate(() => JSON.stringify(localStorage));
   expect(dump).not.toContain('2580');
+});
+
+test('Direkteingabe: nur mögliche Werte, Abbrechen trägt nichts ein, Zusatz-Kniffel und Korrektur', async ({ page }) => {
+  await createClub(page);
+  await page.getByTestId('open-start').click();
+  await page.getByTestId('stake-200').click();
+  await page.getByTestId('confirm-start').click();
+  await expect(page.getByTestId('game-stake')).toBeVisible();
+
+  // Einser: genau 1–5 Würfel plus Streichen, Bestätigen erst nach Auswahl.
+  await page.getByTestId('pick-ones').click();
+  const dialog = page.getByRole('dialog', { name: 'Einser · Maxi' });
+  await expect(dialog.getByRole('radio')).toHaveCount(6);
+  await expect(page.getByTestId('confirm-pick')).toBeDisabled();
+  await page.getByTestId('opt-4').click();
+  await expect(page.getByTestId('confirm-pick')).toHaveText('4 Punkte eintragen');
+  await dialog.getByRole('button', { name: 'Abbrechen' }).click();
+  await expect(page.getByTestId('current-player')).toHaveText('Maxi');
+
+  await enterScore(page, 'kniffel', 50); // Maxi
+  await enterScore(page, 'chance', 20); // Franzi
+  // Maxi: weiterer Kniffel als Joker in der Großen Straße.
+  await page.getByTestId('pick-large_straight').click();
+  await page.getByTestId('opt-40').click();
+  await page.getByTestId('extra-kniffel').check();
+  await page.getByTestId('confirm-pick').click();
+  await expect(page.locator('.duel__score').first()).toContainText('140');
+
+  // Korrektur: eingetragenen Wert antippen, neuen Wert + Grund + Bestätigung.
+  const franziChance = page.locator('[data-testid$="-chance"] button').first(); // einziges eingetragenes Chance-Feld (Franzi)
+  await franziChance.click();
+  await page.getByTestId('opt-24').click();
+  await page.getByLabel('Grund der Korrektur').fill('falsch angetippt');
+  await page.getByText('Ich bestätige diese Korrektur.').click();
+  await page.getByTestId('confirm-pick').click();
+  await expect(page.locator('.duel__score').nth(1)).toContainText('24');
 });

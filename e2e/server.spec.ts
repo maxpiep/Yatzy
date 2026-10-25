@@ -25,17 +25,13 @@ test('zwei Geräte spielen dieselbe Partie über den eigenen Server', async ({ b
   // Franzi sieht die laufende Partie live, ohne neu zu laden, und trägt den Wurf ein.
   await expect(franzi.getByTestId('live-game')).toBeVisible();
   await franzi.getByRole('link', { name: /Partie fortsetzen/ }).click();
-  for (const v of [5, 5, 5, 5, 5]) await franzi.getByTestId(`pad-${v}`).click();
-  await franzi.getByTestId('confirm-roll').click();
+  // Franzi trägt für Maxi ein (gemeinsamer Tisch) – Maxis Gerät sieht es in Echtzeit.
+  await franzi.getByTestId('pick-kniffel').click();
+  await franzi.getByTestId('opt-50').click();
+  await franzi.getByTestId('confirm-pick').click();
 
-  // Maxis Gerät erhält den Wurf in Echtzeit und wertet ihn.
-  await expect(maxi.getByTestId('roll-state')).toContainText('Bestätigt · Wurf 1 von 3');
-  await expect(maxi.getByText('Kniffel!')).toBeVisible();
-  await maxi.getByTestId('pick-kniffel').click();
-  await maxi.getByTestId('confirm-score').click();
-
-  await expect(franzi.getByTestId('current-player')).toHaveText('Franzi');
-  await expect(franzi.locator('[data-testid$="-kniffel"]').first()).toContainText('50');
+  await expect(maxi.getByTestId('current-player')).toHaveText('Franzi');
+  await expect(maxi.locator('[data-testid$="-kniffel"]').first()).toContainText('50');
 });
 
 test('ungültige Einladung wird abgewiesen', async ({ page }) => {
