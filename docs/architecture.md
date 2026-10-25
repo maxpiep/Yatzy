@@ -8,12 +8,22 @@ State (src/state/club.tsx)  ── run(fn) → Speichern/Fehler/Toast/Neuladen
    │
    ▼
 Backend-Interface (src/data/backend.ts)
-   ├── SupabaseBackend  → PostgREST-RPCs + Selects, Supabase Realtime   (Mehrspieler)
+   ├── ServerBackend    → eigener Server (server/): /api/rpc + Server-Sent Events (Mehrspieler, ohne Fremddienste)
+   ├── SupabaseBackend  → PostgREST-RPCs + Selects, Supabase Realtime   (Mehrspieler, optional)
    └── LocalBackend     → Browser-Speicher, gleiche Semantik/Fehlercodes   (Einzelgerät, ausdrücklich gewählt)
    ▲
 Domäne (src/domain) – reine Funktionen ohne React/Supabase:
    rules/ (Wertung, Joker, Würfe), gameState, ledger, statistics, money, validation (Zod)
 ```
+
+## Eigener Server
+
+`server/clubServer.ts` legt Zugriffsschutz (Geräte-Sitzungen, Einladungen, Rollen) um die Spiel-Engine
+(`LocalBackend`), die dieselben Regeln, Validierungen und Fehlercodes wie die PostgreSQL-Funktionen umsetzt.
+Node verarbeitet jede Anfrage vollständig synchron, bevor die nächste beginnt – jeder Vorgang ist atomar und wird
+erst nach erfolgreicher Prüfung gespeichert (`server/fileStorage.ts`: temporäre Datei + fsync + rename). Nach jeder
+Änderung erhalten die Geräte des Raums ein `change`-Ereignis und laden den Serverstand neu. Getestet in
+`server/server.test.ts` und `e2e/server.spec.ts` (zwei getrennte Browser-Kontexte).
 
 ## Grundsätze
 

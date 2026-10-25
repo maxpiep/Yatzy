@@ -1,0 +1,10 @@
+services:
+  kniffel-club:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '8787:8787'
+    volumes:
+      - kniffel-data:/data
+volumes:
+  kniffel-data:

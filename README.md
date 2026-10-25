@@ -20,7 +20,7 @@ dauerhafter Spielhistorie, Bestenliste und einer nachvollziehbaren Kniffelkasse.
   Filter nach Person, Typ und Zeitraum.
 - **Spielhistorie** mit Detailansicht (Wertungsblock, Buchungen, Korrekturen, Ereignisprotokoll).
 - **Bestenliste** aus abgeschlossenen Partien: Siege, Quote, Ø/Höchst-/Niedrigstpunkte, Serien, direkter Vergleich.
-- **Multiplayer:** Supabase (PostgreSQL + Realtime), Einladungslink, Rollen, RLS, Verbindungsstatus.
+- **Multiplayer:** eigener Server oder Supabase, Einladungslink, Rollen, Verbindungsstatus.
 - **Einstellungen:** Spielerprofile, Gerätezuordnung, Einladungen, Hell/Dunkel, reduzierte Animationen,
   sanftes Scrollen, Regelübersicht.
 - Barrierefrei: semantisches HTML, Tastatur, sichtbarer Fokus, Screenreader-Texte, Dialoge mit Fokusfalle.
@@ -28,8 +28,22 @@ dauerhafter Spielhistorie, Bestenliste und einer nachvollziehbaren Kniffelkasse.
 ## Technologien
 
 React 19 · TypeScript · Vite 8 · eigenes CSS-Design-System (Tokens in `src/styles/tokens.css`) ·
-Supabase (PostgreSQL, RLS, Realtime, Anonymous Auth) · Zod · GSAP (`@gsap/react`) · Lenis ·
+eigener Node-Server (Datei-Speicher, Server-Sent Events) oder optional Supabase (PostgreSQL, RLS, Realtime) · Zod · GSAP (`@gsap/react`) · Lenis ·
 eine angepasste React-Bits-Komponente (`AnimatedContent`) · Vitest + Testing Library · Playwright.
+
+## So wird gespielt: ein Gerät, echte Würfel
+
+Ihr würfelt mit echten Würfeln am Tisch und tragt jeden Wurf auf **einem gemeinsamen Gerät** ein (Handy oder
+Tablet, das weitergereicht wird). Die App ist ohne Server, Supabase oder Vercel nutzbar:
+
+- **Online:** https://maxpiep.github.io/Yatzy/ – wird bei jedem Push auf `main` automatisch per GitHub Pages
+  veröffentlicht. Tipp: „Zum Startbildschirm hinzufügen“, dann startet sie wie eine App.
+- Alle Partien, die Bestenliste und die Kniffelkasse werden im Browser dieses Geräts gespeichert.
+  **Unter Einstellungen → Datensicherung regelmäßig eine Sicherung herunterladen** – damit lässt sich der Stand
+  auch auf einem neuen Gerät wiederherstellen.
+
+Optional, falls ihr später doch zwei Handys synchron nutzen wollt: eigener Server (`docker compose up -d --build`)
+oder Supabase – siehe [`docs/deployment.md`](docs/deployment.md).
 
 ## Installation & Entwicklung
 
@@ -51,6 +65,9 @@ Gerät, keine Synchronisierung). Erzwingen: `VITE_BACKEND_MODE=local npm run dev
 | `npm test` | Unit-/Komponententests (Regeln, Kasse, Statistik, Einsatz-Modal, Würfeingabe, lokales Backend) |
 | `npm run test:db` | Datenbanktests gegen lokale PostgreSQL (Migrationen, RPCs, RLS, Nebenläufigkeit, Regel-Parität SQL↔TS) |
 | `npm run test:e2e` | Playwright im lokalen Modus (komplette Partie, Abbruch, Kasse, zwei Tabs, mobile Breite) |
+| `npm run test:e2e:server` | Playwright gegen den eigenen Server: zwei getrennte Geräte spielen dieselbe Partie in Echtzeit |
+| `npm run build:selfhost` / `npm start` | Eigenen Server bauen und starten |
+| `npm run build:pages` | Build für GitHub Pages (Ein-Gerät-Modus) |
 | `npm run build` | Produktions-Build |
 | `npm run check` | Lint + Typecheck + Unit-Tests + Build |
 

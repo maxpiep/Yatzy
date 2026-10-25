@@ -25,5 +25,5 @@ export function CopyField({ value, label }: { value: string; label: string }) {
 
 export function inviteUrl(token: string): string {
   // Token im Fragment: wird nicht an Server gesendet und landet nicht in Zugriffslogs.
-  return `${window.location.origin}/beitreten#t=${token}`;
+  return `${window.location.origin}${import.meta.env.BASE_URL}beitreten#t=${token}`;
 }

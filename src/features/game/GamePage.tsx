@@ -80,8 +80,9 @@ function ActiveGame() {
     setScoring(true);
     try {
       const pts = strike ? 0 : (selectedPreview?.points ?? 0);
+      const next = game.currentTurn < TOTAL_TURNS ? game.players.find((p) => p.id !== currentId)?.displayName : null;
       await run((b) => b.scoreTurn(game.id, game.version, game.currentTurn, selected, strike), {
-        success: `${currentName}: ${CATEGORY_LABELS[selected]} ${pts === 0 ? 'gestrichen' : `mit ${pts} Punkten eingetragen`}`,
+        success: `${currentName}: ${CATEGORY_LABELS[selected]} ${pts === 0 ? 'gestrichen' : `mit ${pts} Punkten eingetragen`}${next ? ` · Würfel an ${next} weitergeben` : ''}`,
       });
       setSelection(null);
     } catch {

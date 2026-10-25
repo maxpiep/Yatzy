@@ -17,7 +17,12 @@
     "test:watch": "vitest",
     "test:db": "vitest run --config vitest.db.config.ts",
     "test:e2e": "playwright test",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build"
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build",
+    "build:server": "vite build --config vite.server.config.ts",
+    "build:selfhost": "tsc -b && vite build --mode server && vite build --config vite.server.config.ts",
+    "build:pages": "tsc -b && vite build --mode pages && node -e \"require('fs').copyFileSync('dist/index.html','dist/404.html')\"",
+    "start": "node dist-server/index.js",
+    "test:e2e:server": "playwright test --config playwright.server.config.ts"
   },
   "dependencies": {
     "@fontsource-variable/fraunces": "^5.3.0",

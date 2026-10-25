@@ -4,6 +4,7 @@ import { defineConfig, devices } from '@playwright/test';
 // wird auf Datenbankebene in tests/db getestet.
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: /server\.spec\.ts/,
   timeout: 120_000,
   fullyParallel: false,
   reporter: [['list']],

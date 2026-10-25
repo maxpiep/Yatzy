@@ -11,7 +11,7 @@ import type {
   StakeCents,
 } from '../domain/types';
 
-export type BackendMode = 'supabase' | 'local';
+export type BackendMode = 'supabase' | 'server' | 'local';
 export type ConnectionStatus = 'connecting' | 'synced' | 'offline';
 
 export interface ActiveGameState {
