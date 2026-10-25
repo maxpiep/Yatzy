@@ -39,8 +39,12 @@ Domäne (src/domain) – reine Funktionen ohne React/Supabase:
 - Einladungslink `https://<host>/beitreten#t=<token>`: Das Token steht im URL-Fragment (wird nicht an Server
   gesendet, landet nicht in Zugriffslogs) und wird sofort aus der Adresszeile entfernt. In der Datenbank liegt
   nur der SHA-256-Hash.
-- Rollen: `owner` (Clubgründer bzw. per Admin-Link) darf Einladungen erzeugen, Partien abbrechen und
-  Korrekturbuchungen vornehmen; `member` darf spielen, Wertungen korrigieren (protokolliert) und Zahlungen erfassen.
+- Rollen: `owner` (Clubgründer bzw. per einmaligem Admin-Link) darf Einladungen erzeugen, Geräten den Zugriff
+  entziehen, Partien abbrechen und Korrekturbuchungen vornehmen; `member` darf spielen, Wertungen korrigieren und
+  Zahlungen erfassen.
+- Vertrauensmodell: Maxi und Franzi sitzen am selben Tisch; jedes Mitglied darf für beide eintragen. Deshalb sind
+  Wertungskorrekturen und Zahlungen nicht auf eine Person beschränkt, aber vollständig protokolliert und für beide
+  sichtbar (Markierung im Block, Hinweis im Abschlussdialog, unveränderliches Kassenbuch).
 - Verbindungsstatus: Kanalstatus von Supabase Realtime + `online`/`offline`-Events. Nach jeder
   (Wieder-)Verbindung und beim Zurückkehren in den Tab wird der Serverstand neu geladen.
 - Konkurrierende Eingaben: optimistische Nebenläufigkeit über `games.version`; Entwürfe (noch nicht bestätigte

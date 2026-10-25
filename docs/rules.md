@@ -84,6 +84,11 @@ Punkten belegt ist**. Dann gilt:
 
 Gespeicherte Wertungen können nur während einer laufenden Partie über einen ausdrücklich bestätigten Dialog mit
 Pflichtgrund korrigiert werden (`correct_score`). Die Neuberechnung nutzt das Kniffel-Feld zum Zeitpunkt der
-ursprünglichen Wertung. Das Kniffel-Feld selbst kann nicht korrigiert werden, wenn spätere Würfe des Spielers
-Kniffel waren (Joker/Zusatzpunkte hingen davon ab) – Fehlercode `correction_conflict`. Alte und neue Werte werden
-in `score_corrections` und `game_events` protokolliert. Abgeschlossene Partien sind unveränderlich.
+ursprünglichen Wertung. Wird das **Kniffel-Feld** korrigiert (z. B. versehentlich gestrichen statt 50), werden alle
+späteren Kniffel-Würfe dieses Spielers automatisch neu bewertet (Zusatzpunkte und Joker) und als „Folgekorrektur“
+protokolliert; bewusst gestrichene Felder bleiben gestrichen (`strike_requested`). Alte und neue Werte werden in
+`score_corrections` und `game_events` protokolliert, korrigierte Felder sind im Block markiert und die Anzahl der
+Korrekturen wird im Abschlussdialog angezeigt. Abgeschlossene Partien sind unveränderlich.
+
+Eine Partie, deren beide Blöcke vollständig sind, kann nicht mehr abgebrochen werden – sie muss abgeschlossen und
+abgerechnet werden.

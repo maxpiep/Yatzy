@@ -95,3 +95,28 @@ describe('LocalBackend (gleiche Semantik wie der Server)', () => {
     expect(JSON.stringify(await b.getGameDetail(g.id))).toBe(before);
   });
 });
+
+describe('LocalBackend – Folgekorrektur', () => {
+  it('Korrektur des Kniffel-Felds bewertet spätere Kniffel neu', async () => {
+    const { b, roomId } = await setup();
+    let g = await b.createGame(roomId, 200, crypto.randomUUID());
+    const a = g.startingPlayerId;
+    const step = async (dice: number[], cat: Parameters<LocalBackend['scoreTurn']>[3], strike = false) => {
+      g = await b.confirmRoll(g.id, g.version, g.currentTurn, dice, NONE);
+      g = await b.scoreTurn(g.id, g.version, g.currentTurn, cat, strike);
+    };
+    await step([3, 3, 3, 3, 3], 'kniffel', true);
+    await step([1, 1, 2, 2, 3], 'chance');
+    await step([4, 4, 4, 4, 4], 'large_straight');
+    g = await b.correctScore(g.id, g.version, a, 'kniffel', [3, 3, 3, 3, 3], false, 'Versehentlich gestrichen');
+    const scores = (await b.getGameDetail(g.id)).scores.filter((s) => s.playerId === a);
+    expect(scores.find((s) => s.category === 'large_straight')).toMatchObject({ points: 40, joker: true, kniffelBonus: 50 });
+  });
+
+  it('vollständige Partie kann nicht abgebrochen werden', async () => {
+    const { b, roomId } = await setup();
+    const g0 = await b.createGame(roomId, 100, crypto.randomUUID());
+    await playAll(b, g0.id, () => [3, 3, 3, 4, 4]);
+    expect(await code(b.cancelGame(g0.id, 'Kein Bock'))).toBe('game_complete');
+  });
+});
