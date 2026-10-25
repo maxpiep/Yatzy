@@ -1,0 +1,219 @@
+.scorecard {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--fs-md);
+  table-layout: fixed;
+}
+.scorecard col.sc-cat {
+  width: auto;
+}
+.scorecard col.sc-player {
+  width: clamp(5.5rem, 26vw, 9rem);
+}
+.scorecard th,
+.scorecard td {
+  padding: 0;
+  border-bottom: 1px solid var(--c-line);
+  height: 48px;
+}
+.scorecard-panel {
+  overflow: visible;
+}
+.scorecard thead th:first-child {
+  border-top-left-radius: var(--r-lg);
+}
+.scorecard thead th:last-child {
+  border-top-right-radius: var(--r-lg);
+}
+.scorecard .sc-total th {
+  border-bottom-left-radius: var(--r-lg);
+}
+.scorecard .sc-total td:last-child {
+  border-bottom-right-radius: var(--r-lg);
+}
+.scorecard thead th {
+  position: sticky;
+  top: 65px;
+  z-index: 2;
+  background: var(--c-surface-2);
+  height: 56px;
+  font-weight: var(--fw-semibold);
+  border-bottom: 1px solid var(--c-line-strong);
+}
+.sc-head-player {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: var(--s-2) var(--s-1);
+  font-size: var(--fs-sm);
+  border-top: 3px solid var(--player-color, transparent);
+}
+.sc-head-player small {
+  font-size: 0.75rem;
+  color: var(--c-success);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.scorecard th[scope='row'] {
+  text-align: left;
+  font-weight: var(--fw-medium);
+  padding: 0 var(--s-3) 0 var(--s-4);
+}
+.sc-cat-name {
+  display: block;
+  line-height: 1.2;
+}
+.sc-cat-hint {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--c-ink-3);
+  font-weight: var(--fw-regular);
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .sc-cat-hint {
+    display: none;
+  }
+}
+.sc-cell {
+  text-align: center;
+  border-left: 1px solid var(--c-line);
+}
+.sc-cell--current {
+  background: color-mix(in srgb, var(--c-felt-soft) 55%, transparent);
+}
+.sc-btn {
+  width: 100%;
+  height: 100%;
+  min-height: 48px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-lg);
+  font-weight: var(--fw-semibold);
+  position: relative;
+}
+.sc-btn:disabled {
+  cursor: default;
+}
+.sc-value--struck {
+  color: var(--c-ink-3);
+  font-weight: var(--fw-regular);
+}
+.sc-value--struck::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  top: 50%;
+  height: 2px;
+  background: currentColor;
+  transform: rotate(-12deg);
+  opacity: 0.7;
+}
+.sc-preview {
+  color: var(--c-felt);
+  border-radius: var(--r-sm);
+  margin: 4px;
+  width: calc(100% - 8px);
+  height: calc(100% - 8px);
+  min-height: 40px;
+  border: 1.5px dashed color-mix(in srgb, var(--c-felt) 55%, transparent);
+  background: var(--c-surface);
+  transition: background var(--dur-fast), transform var(--dur-fast);
+}
+.sc-preview:hover {
+  background: var(--c-felt-soft);
+}
+.sc-preview--zero {
+  color: var(--c-ink-3);
+  border-color: var(--c-line-strong);
+  font-weight: var(--fw-regular);
+}
+.sc-preview--selected,
+.sc-preview--selected:hover {
+  background: var(--c-felt);
+  color: var(--c-on-felt);
+  border-style: solid;
+  border-color: var(--c-felt);
+}
+.sc-flag {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 0.625rem;
+  font-weight: var(--fw-bold);
+  padding: 0 4px;
+  border-radius: 4px;
+  background: var(--c-brass-soft);
+  color: var(--c-brass);
+  line-height: 1.5;
+}
+.sc-flag--bonus {
+  left: 4px;
+  right: auto;
+}
+.sc-corrected {
+  position: absolute;
+  bottom: 3px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--c-warning);
+}
+.sc-sum th,
+.sc-sum td {
+  background: var(--c-surface-2);
+  font-size: var(--fs-sm);
+  height: 40px;
+}
+.sc-sum td {
+  text-align: center;
+  font-weight: var(--fw-semibold);
+  font-variant-numeric: tabular-nums;
+}
+.sc-sum--strong th,
+.sc-sum--strong td {
+  background: var(--c-sunken);
+  font-weight: var(--fw-bold);
+}
+.sc-total th,
+.sc-total td {
+  height: 60px;
+  background: var(--c-ink);
+  color: var(--c-paper);
+  border-bottom: 0;
+}
+.sc-total td {
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: var(--fs-2xl);
+  font-variant-numeric: tabular-nums;
+}
+.sc-section th {
+  height: 36px;
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--c-ink-3);
+  background: var(--c-surface);
+  padding-left: var(--s-4);
+  text-align: left;
+}
+.sc-bonus-progress {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--c-ink-3);
+  font-weight: var(--fw-medium);
+}
+.sc-flash {
+  animation: none;
+}

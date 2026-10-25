@@ -1,0 +1,195 @@
+/* Kniffel Club – Design-Tokens
+   Identität: warmes Spielblock-Papier, Tinte, Spieltisch-Filz und Messing. */
+:root {
+  color-scheme: light;
+
+  /* Farben */
+  --c-paper: #f5f0e6;
+  --c-paper-deep: #ece4d4;
+  --c-surface: #fffdf8;
+  --c-surface-2: #f8f3ea;
+  --c-sunken: #efe8db;
+  --c-ink: #1b2231;
+  --c-ink-2: #454d5e;
+  --c-ink-3: #5f6676;
+  --c-line: #dfd5c4;
+  --c-line-strong: #c9bca6;
+  --c-felt: #1e4b3d;
+  --c-felt-hover: #173c31;
+  --c-felt-soft: #dce9e2;
+  --c-on-felt: #fbf8f1;
+  --c-brass: #7a5718;
+  --c-cta-bg: #f3e6c8;
+  --c-cta-bg-hover: #fff3d6;
+  --c-cta-fg: #1b2231;
+  --c-brass-soft: #f3e6c8;
+  --c-danger: #a8342a;
+  --c-danger-soft: #f7e0dc;
+  --c-success: #23704f;
+  --c-success-soft: #dcefe4;
+  --c-warning: #8a5a00;
+  --c-warning-soft: #f8ebcf;
+  --c-focus: #2b6cb0;
+  --c-die: #fffcf5;
+  --c-die-edge: #e3d9c7;
+  --c-pip: #1b2231;
+  --c-scrim: rgb(20 24 33 / 0.48);
+
+  /* Spielerfarben (Fallback; tatsächliche Farben aus dem Profil) */
+  --c-maxi: #2f6f8f;
+  --c-franzi: #c2513f;
+
+  /* Typografie */
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.125rem;
+  --fs-xl: 1.375rem;
+  --fs-2xl: 1.75rem;
+  --fs-3xl: clamp(2rem, 1.5rem + 2.2vw, 2.75rem);
+  --fs-hero: clamp(2.5rem, 1.8rem + 3.5vw, 4rem);
+  --lh-tight: 1.15;
+  --lh-normal: 1.5;
+  --fw-regular: 420;
+  --fw-medium: 520;
+  --fw-semibold: 620;
+  --fw-bold: 720;
+
+  /* Abstände (4er-Raster) */
+  --s-1: 0.25rem;
+  --s-2: 0.5rem;
+  --s-3: 0.75rem;
+  --s-4: 1rem;
+  --s-5: 1.25rem;
+  --s-6: 1.5rem;
+  --s-8: 2rem;
+  --s-10: 2.5rem;
+  --s-12: 3rem;
+  --s-16: 4rem;
+  --gutter: clamp(1rem, 0.6rem + 1.6vw, 2rem);
+  --content-max: 76rem;
+
+  /* Radien */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* Schatten */
+  --sh-1: 0 1px 0 rgb(27 34 49 / 0.04), 0 1px 2px rgb(27 34 49 / 0.06);
+  --sh-2: 0 1px 0 rgb(27 34 49 / 0.04), 0 4px 14px -4px rgb(27 34 49 / 0.12);
+  --sh-3: 0 2px 4px rgb(27 34 49 / 0.06), 0 18px 48px -12px rgb(27 34 49 / 0.28);
+  --sh-die: 0 1px 0 #fff inset, 0 -2px 0 rgb(27 34 49 / 0.06) inset, 0 2px 0 var(--c-die-edge), 0 6px 14px -6px rgb(27 34 49 / 0.35);
+
+  /* Bewegung */
+  --dur-fast: 140ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* Ebenen */
+  --z-nav: 20;
+  --z-sticky: 30;
+  --z-dialog: 50;
+  --z-toast: 60;
+
+  --tap: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --c-paper: #11151d;
+    --c-paper-deep: #0c1016;
+    --c-surface: #182029;
+    --c-surface-2: #1d2631;
+    --c-sunken: #141a22;
+    --c-ink: #f2ede3;
+    --c-ink-2: #c5c9d1;
+    --c-ink-3: #a3a9b4;
+    --c-line: #2b3542;
+    --c-line-strong: #3a4656;
+    --c-felt: #3f9a7b;
+    --c-felt-hover: #4fae8d;
+    --c-felt-soft: #1d3a31;
+    --c-on-felt: #0d1a15;
+    --c-brass: #e0b862;
+    --c-brass-soft: #3a3018;
+    --c-danger: #f08a7c;
+    --c-danger-soft: #3d201d;
+    --c-success: #6fd0a3;
+    --c-cta-bg: #f3e6c8;
+    --c-cta-bg-hover: #fff3d6;
+    --c-cta-fg: #1b2231;
+    --c-success-soft: #173528;
+    --c-warning: #f0c060;
+    --c-warning-soft: #3a2f14;
+    --c-focus: #7fb5ff;
+    --c-die: #f6f1e6;
+    --c-die-edge: #b9ad98;
+    --c-pip: #1b2231;
+    --c-scrim: rgb(0 0 0 / 0.6);
+    --c-maxi: #6fb3d4;
+    --c-franzi: #ee8d7c;
+    --sh-1: 0 1px 2px rgb(0 0 0 / 0.4);
+    --sh-2: 0 6px 18px -6px rgb(0 0 0 / 0.55);
+    --sh-3: 0 24px 60px -12px rgb(0 0 0 / 0.7);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --c-paper: #11151d;
+  --c-paper-deep: #0c1016;
+  --c-surface: #182029;
+  --c-surface-2: #1d2631;
+  --c-sunken: #141a22;
+  --c-ink: #f2ede3;
+  --c-ink-2: #c5c9d1;
+  --c-ink-3: #a3a9b4;
+  --c-line: #2b3542;
+  --c-line-strong: #3a4656;
+  --c-felt: #3f9a7b;
+  --c-felt-hover: #4fae8d;
+  --c-felt-soft: #1d3a31;
+  --c-on-felt: #0d1a15;
+  --c-brass: #e0b862;
+  --c-brass-soft: #3a3018;
+  --c-danger: #f08a7c;
+  --c-danger-soft: #3d201d;
+  --c-success: #6fd0a3;
+  --c-cta-bg: #f3e6c8;
+  --c-cta-bg-hover: #fff3d6;
+  --c-cta-fg: #1b2231;
+  --c-success-soft: #173528;
+  --c-warning: #f0c060;
+  --c-warning-soft: #3a2f14;
+  --c-focus: #7fb5ff;
+  --c-die: #f6f1e6;
+  --c-die-edge: #b9ad98;
+  --c-pip: #1b2231;
+  --c-scrim: rgb(0 0 0 / 0.6);
+  --c-maxi: #6fb3d4;
+  --c-franzi: #ee8d7c;
+  --sh-1: 0 1px 2px rgb(0 0 0 / 0.4);
+  --sh-2: 0 6px 18px -6px rgb(0 0 0 / 0.55);
+  --sh-3: 0 24px 60px -12px rgb(0 0 0 / 0.7);
+}
+
+:root[data-motion='reduced'] {
+  --dur-fast: 0ms;
+  --dur: 0ms;
+  --dur-slow: 0ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion='full']) {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}
