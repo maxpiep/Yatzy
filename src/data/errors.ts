@@ -24,7 +24,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   invalid_category: 'Unbekanntes Wertungsfeld.',
   category_taken: 'Dieses Feld ist bereits belegt.',
   score_not_found: 'Diese Wertung wurde nicht gefunden.',
-  correction_conflict: 'Das Kniffel-Feld kann nicht korrigiert werden, weil spätere Kniffel-Wertungen davon abhängen.',
   reason_required: 'Bitte gib einen Grund mit mindestens 3 Zeichen an.',
   invalid_amount: 'Bitte gib einen gültigen Betrag an (0,01 € bis 10.000 €).',
   invalid_note: 'Die Notiz ist zu lang.',
@@ -40,6 +39,9 @@ export const ERROR_MESSAGES: Record<string, string> = {
   immutable_record: 'Dieser Datensatz ist unveränderlich.',
   stake_immutable: 'Der Einsatz einer Partie kann nach dem Start nicht geändert werden.',
   not_supported_local: 'Im lokalen Modus ist diese Funktion nicht verfügbar (kein gemeinsamer Server).',
+  game_complete: 'Beide Wertungsblöcke sind vollständig – die Partie muss abgeschlossen und abgerechnet werden.',
+  cannot_remove_self: 'Du kannst dich nicht selbst entfernen.',
+  member_not_found: 'Dieses Mitglied wurde nicht gefunden.',
   network: 'Keine Verbindung zum Server. Bitte Internetverbindung prüfen und erneut versuchen.',
   unknown: 'Unerwarteter Fehler. Bitte erneut versuchen.',
 };

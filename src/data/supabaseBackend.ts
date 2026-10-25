@@ -1,6 +1,6 @@
 import type { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import type { Category, Game, LedgerEntry, Room, StakeCents } from '../domain/types';
-import type { Backend, ConnectionStatus, CreatedRoom, GameDetail, RoomSnapshot } from './backend';
+import type { Backend, ConnectionStatus, CreatedRoom, GameDetail, Member, RoomSnapshot } from './backend';
 import { BackendError, toBackendError } from './errors';
 import {
   mapCorrection,
@@ -85,6 +85,21 @@ export class SupabaseBackend implements Backend {
 
   rotateInvite(roomId: string, role: Room['role']): Promise<string> {
     return this.rpc<string>('rotate_invite', { p_room_id: roomId, p_role: role });
+  }
+
+  async listMembers(roomId: string): Promise<Member[]> {
+    const rows = await unwrap(this.sb.from('room_members').select('user_id, role, joined_at').eq('room_id', roomId).order('joined_at'));
+    return (rows as { user_id: string; role: Room['role']; joined_at: string }[]).map((m) => ({
+      userId: m.user_id,
+      role: m.role,
+      joinedAt: m.joined_at,
+      isSelf: m.user_id === this.userId,
+    }));
+  }
+
+  async removeMember(roomId: string, userId: string): Promise<void> {
+    const { error } = await this.sb.rpc('remove_member', { p_room_id: roomId, p_user_id: userId });
+    if (error) throw toBackendError(error);
   }
 
   async updateRoom(roomId: string, name: string): Promise<void> {

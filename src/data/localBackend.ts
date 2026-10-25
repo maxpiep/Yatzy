@@ -4,7 +4,7 @@ import { getRuleset, DEFAULT_RULESET } from '../domain/rules/ruleset';
 import { calculateScore, computeTotals, isKniffel, RuleError, strikeScore, validateDice } from '../domain/rules/scoring';
 import { TurnError, validateNextRoll } from '../domain/rules/turn';
 import { isValidStake, MAX_AMOUNT_CENTS, formatCents } from '../domain/money';
-import type { Backend, ConnectionStatus, CreatedRoom, GameDetail, RoomSnapshot } from './backend';
+import type { Backend, ConnectionStatus, CreatedRoom, GameDetail, Member, RoomSnapshot } from './backend';
 import { BackendError } from './errors';
 import type { DbCorrection, DbEvent, DbGame, DbLedger, DbPlayer, DbRoll, DbScore } from './mappers';
 import { mapCorrection, mapEvent, mapGame, mapLedger, mapPlayer, mapRoll, mapScore } from './mappers';
@@ -163,6 +163,15 @@ export class LocalBackend implements Backend {
     throw new BackendError('not_supported_local');
   }
 
+  async listMembers(): Promise<Member[]> {
+    const s = this.read();
+    return [{ userId: s.userId, role: 'owner', joinedAt: s.rooms[0]?.created_at ?? now(), isSelf: true }];
+  }
+
+  async removeMember(): Promise<void> {
+    throw new BackendError('not_supported_local');
+  }
+
   async updateRoom(roomId: string, name: string): Promise<void> {
     this.transact((s) => {
       const room = this.requireRoom(s, roomId);
@@ -314,6 +323,7 @@ export class LocalBackend implements Backend {
         points: result.points,
         dice: [...roll.dice],
         joker: result.joker,
+        strike_requested: strike,
         kniffel_bonus: result.kniffelBonus,
         turn_no: g.current_turn,
         created_at: now(),
@@ -353,9 +363,6 @@ export class LocalBackend implements Backend {
       validateDice(dice);
       const ruleset = getRuleset(g.ruleset_id, g.ruleset_version);
       const own = s.scores.filter((x) => x.game_id === g.id && x.player_id === playerId);
-      if (category === 'kniffel' && own.some((x) => x.turn_no > row.turn_no && isKniffel(x.dice as never))) {
-        fail('correction_conflict');
-      }
       // Kontext: Kniffel-Feld zum Zeitpunkt der ursprünglichen Wertung, ohne das korrigierte Feld.
       const context = buildScorecard(
         own.filter((x) => x.category === 'kniffel' && x.turn_no < row.turn_no).map(mapScore),
@@ -381,10 +388,41 @@ export class LocalBackend implements Backend {
         kind: result.points === 0 ? 'struck' : 'scored',
         dice: [...dice],
         joker: result.joker,
+        strike_requested: strike,
         kniffel_bonus: result.kniffelBonus,
         corrected_at: now(),
         correction_count: row.correction_count + 1,
       });
+      // Folgekorrektur: spätere Kniffel-Würfe hängen vom Kniffel-Feld ab (Zusatzpunkte/Joker).
+      if (category === 'kniffel') {
+        const kniffelCard = buildScorecard([mapScore(row)], playerId);
+        for (const x of own.filter((o) => o.turn_no > row.turn_no && isKniffel(o.dice as never)).sort((a, b) => a.turn_no - b.turn_no)) {
+          const next =
+            x.strike_requested
+              ? strikeScore(x.dice as never, x.category, kniffelCard, ruleset)
+              : calculateScore(x.dice as never, x.category, kniffelCard, ruleset);
+          if (next.points === x.points && next.joker === x.joker && next.kniffelBonus === x.kniffel_bonus) continue;
+          s.corrections.push({
+            id: ++s.seq,
+            score_id: x.id,
+            game_id: g.id,
+            player_id: playerId,
+            category: x.category,
+            old_value: { points: x.points, kind: x.kind },
+            new_value: { points: next.points, kind: next.points === 0 ? 'struck' : 'scored' },
+            reason: `Folgekorrektur (Kniffel-Feld geändert): ${r}`.slice(0, 300),
+            created_at: now(),
+          });
+          Object.assign(x, {
+            points: next.points,
+            kind: next.points === 0 ? 'struck' : 'scored',
+            joker: next.joker,
+            kniffel_bonus: next.kniffelBonus,
+            corrected_at: now(),
+            correction_count: x.correction_count + 1,
+          });
+        }
+      }
       g.version++;
       this.log(s, g.id, 'score_corrected', { player_id: playerId, category, old_points: oldPoints, new_points: result.points, reason: r });
       return mapGame(g);
@@ -447,6 +485,7 @@ export class LocalBackend implements Backend {
   async cancelGame(gameId: string, reason: string): Promise<Game> {
     return this.transact((s) => {
       const g = this.lockGame(s, gameId, null);
+      if (g.current_turn > TOTAL_TURNS) fail('game_complete');
       if (reason.trim().length < 3) fail('reason_required');
       Object.assign(g, { status: 'cancelled', settlement_status: 'void', cancel_reason: reason.trim(), version: g.version + 1 });
       this.log(s, g.id, 'game_cancelled', { reason: reason.trim() });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type { CreatedRoom } from '../data/backend';
 import { BackendError } from '../data/errors';
@@ -107,7 +107,7 @@ export function SetupPage() {
           <div className="field">
             <span className="field__label">Admin-Link – sicher aufbewahren, nicht teilen</span>
             <CopyField value={inviteUrl(created.ownerToken!)} label="Admin-Link" />
-            <span className="field__hint">Damit stellst du deine Admin-Rechte auf einem neuen Gerät wieder her.</span>
+            <span className="field__hint">Damit stellst du deine Admin-Rechte einmalig auf einem neuen Gerät wieder her.</span>
           </div>
           <Button variant="primary" onClick={() => selectRoom(created.roomId)}>
             Zum Club
@@ -161,21 +161,29 @@ export function JoinPage() {
   const navigate = useNavigate();
   const [state, setState] = useState<'working' | 'error'>('working');
   const [message, setMessage] = useState('');
+  const [retryable, setRetryable] = useState(false);
   const started = useRef(false);
+  const token = useRef('');
+
+  const attempt = useCallback(() => {
+    setState('working');
+    joinRoom(token.current)
+      .then((res) => navigate('/', { replace: true, state: { joined: res.role } }))
+      .catch((e: BackendError) => {
+        setMessage(e.message);
+        setRetryable(e.code === 'network' || e.code === 'unknown');
+        setState('error');
+      });
+  }, [joinRoom, navigate]);
 
   useEffect(() => {
     if (started.current || !backend) return;
     started.current = true;
-    const token = new URLSearchParams(window.location.hash.slice(1)).get('t') ?? '';
-    // Token sofort aus der Adresszeile entfernen (Verlauf, Screenshots, Teilen).
+    // Token nur im Speicher halten und sofort aus der Adresszeile entfernen (Verlauf, Screenshots, Teilen).
+    token.current = new URLSearchParams(window.location.hash.slice(1)).get('t') ?? '';
     window.history.replaceState(null, '', '/beitreten');
-    joinRoom(token)
-      .then((res) => navigate('/', { replace: true, state: { joined: res.role } }))
-      .catch((e: Error) => {
-        setMessage(e.message);
-        setState('error');
-      });
-  }, [backend, joinRoom, navigate]);
+    attempt();
+  }, [backend, attempt]);
 
   return (
     <BootFrame>
@@ -184,10 +192,15 @@ export function JoinPage() {
           <p role="status">Einladung wird geprüft …</p>
         ) : (
           <>
-            <h1 style={{ fontSize: 'var(--fs-2xl)' }}>Einladung ungültig</h1>
+            <h1 style={{ fontSize: 'var(--fs-2xl)' }}>{retryable ? 'Beitritt fehlgeschlagen' : 'Einladung ungültig'}</h1>
             <p className="muted" role="alert">
               {message}
             </p>
+            {retryable && (
+              <Button variant="primary" onClick={attempt}>
+                Erneut versuchen
+              </Button>
+            )}
             <Link className="btn" to="/">
               Zur Startseite
             </Link>

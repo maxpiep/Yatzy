@@ -13,12 +13,14 @@ interface Props {
   game: Game;
   players: Player[];
   totals: Record<string, ScoreTotals>;
+  /** Anzahl korrigierter Wertungen – vor der Abrechnung für beide sichtbar. */
+  correctionCount?: number;
   onClose: () => void;
   onFinish: () => Promise<void>;
 }
 
 /** Abschlussdialog: zeigt das vorläufige Ergebnis; Abrechnung erst nach Serverbestätigung. */
-export function FinishDialog({ game, players, totals, onClose, onFinish }: Props) {
+export function FinishDialog({ game, players, totals, correctionCount = 0, onClose, onFinish }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const outcome = determineOutcome(totals);
@@ -74,6 +76,11 @@ export function FinishDialog({ game, players, totals, onClose, onFinish }: Props
           {outcome.isDraw ? 'Unentschieden – es wird kein Einsatz berechnet.' : `${name(outcome.loserId)} wird ${formatCents(game.stakeCents)} in der Kniffelkasse belastet.`}
         </span>
       </div>
+      {correctionCount > 0 && (
+        <div className="notice notice--warning">
+          In dieser Partie wurden {correctionCount} Wertungen korrigiert (im Block mit Punkt markiert, mit Grund protokolliert). Bitte gemeinsam prüfen, bevor ihr abrechnet.
+        </div>
+      )}
       {error && (
         <div className="notice notice--danger" role="alert">
           {error}

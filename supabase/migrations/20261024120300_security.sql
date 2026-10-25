@@ -55,7 +55,7 @@ create policy cash_ledger_select on public.cash_ledger
 -- Funktionsrechte: standardmäßig niemand, dann gezielt authenticated.
 -- ---------------------------------------------------------------------------
 revoke execute on all functions in schema private from public, anon;
-revoke execute on all functions in schema public from public, anon;
+revoke execute on all functions in schema public from public, anon, authenticated;
 grant execute on function private.is_member(uuid) to authenticated;
 
 grant execute on function public.create_room(text, text, text) to authenticated;
@@ -71,9 +71,11 @@ grant execute on function public.finish_game(uuid) to authenticated;
 grant execute on function public.cancel_game(uuid, text) to authenticated;
 grant execute on function public.record_payment(uuid, uuid, integer, text, uuid) to authenticated;
 grant execute on function public.record_adjustment(uuid, uuid, integer, text, uuid, uuid) to authenticated;
+grant execute on function public.remove_member(uuid, uuid) to authenticated;
 
 -- Neue Funktionen sollen nicht automatisch für anon ausführbar sein.
-alter default privileges in schema public revoke execute on functions from public, anon;
+alter default privileges revoke execute on functions from public;
+alter default privileges in schema public revoke execute on functions from public, anon, authenticated;
 alter default privileges in schema private revoke execute on functions from public;
 
 -- ---------------------------------------------------------------------------

@@ -129,6 +129,8 @@ create table public.game_scores (
   points integer not null check (points between 0 and 50),
   dice smallint[] not null check (cardinality(dice) = 5 and dice <@ array[1, 2, 3, 4, 5, 6]::smallint[]),
   joker boolean not null default false,
+  -- Bewusst gestrichen (Spielerentscheidung) – unterscheidet sich von „gewertet mit 0 Punkten“.
+  strike_requested boolean not null default false,
   kniffel_bonus integer not null default 0 check (kniffel_bonus in (0, 50)),
   turn_no integer not null check (turn_no between 1 and 26),
   created_at timestamptz not null default now(),
@@ -139,6 +141,7 @@ create table public.game_scores (
   unique (game_id, player_id, category),
   unique (game_id, turn_no),
   check ((kind = 'struck') = (points = 0)),
+  check (not strike_requested or points = 0),
   foreign key (room_id, game_id) references public.games (room_id, id),
   foreign key (room_id, player_id) references public.players (room_id, id)
 );

@@ -41,14 +41,12 @@ export function DiceInput({ rolls, maxRolls, disabled, onConfirm }: Props) {
   useGSAP(
     () => {
       if (reducedMotion || !last || !row.current) return;
-      gsap.from(row.current.querySelectorAll('[data-fresh="true"] .die'), {
-        rotate: () => gsap.utils.random(-28, 28),
-        y: -10,
-        opacity: 0.2,
-        duration: 0.45,
-        ease: 'back.out(2)',
-        stagger: 0.05,
-      });
+      // Animiert nur das Augenbild – der Würfelkörper behält seine Halten-Anhebung (CSS).
+      gsap.fromTo(
+        row.current.querySelectorAll('[data-fresh="true"] .die svg'),
+        { rotate: () => gsap.utils.random(-28, 28), y: -10, opacity: 0.2 },
+        { rotate: 0, y: 0, opacity: 1, duration: 0.45, ease: 'back.out(2)', stagger: 0.05, clearProps: 'transform,opacity' },
+      );
     },
     { scope: row, dependencies: [last?.id] },
   );

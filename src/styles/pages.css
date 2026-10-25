@@ -78,6 +78,9 @@
     top: 84px;
   }
 }
+.page--scorebar {
+  padding-bottom: 200px;
+}
 .turn-done {
   display: grid;
   gap: var(--s-4);
@@ -119,12 +122,12 @@
   }
 }
 .hero .btn--primary {
-  --btn-bg: var(--c-brass-soft);
-  --btn-fg: #1b2231;
+  --btn-bg: var(--c-cta-bg);
+  --btn-fg: var(--c-cta-fg);
   justify-self: start;
 }
 .hero .btn--primary:hover:not(:disabled) {
-  --btn-bg: #fff3d6;
+  --btn-bg: var(--c-cta-bg-hover);
 }
 .hero__actions {
   display: flex;

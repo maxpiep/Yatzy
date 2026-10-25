@@ -55,6 +55,7 @@ export interface DbScore {
   points: number;
   dice: number[];
   joker: boolean;
+  strike_requested?: boolean;
   kniffel_bonus: number;
   turn_no: number;
   created_at: string;

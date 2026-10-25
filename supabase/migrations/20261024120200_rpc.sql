@@ -176,6 +176,7 @@ begin
      or char_length(btrim(coalesce(p_franzi_name, ''))) not between 1 and 30 then
     perform private.kc_raise('invalid_name');
   end if;
+  perform pg_advisory_xact_lock(hashtextextended('kc_create_room:' || v_user::text, 0));
   select count(*) into v_count from public.rooms where created_by = v_user;
   if v_count >= 5 then
     perform private.kc_raise('room_limit');
@@ -225,7 +226,12 @@ begin
     set role = case when excluded.role = 'owner' then 'owner' else public.room_members.role end
   returning role into v_role;
 
-  update public.room_invites set use_count = use_count + 1, last_used_at = now() where id = v_inv.id;
+  -- Admin-Links sind nur einmal verwendbar; Einladungen für Mitglieder bis zum Ablauf.
+  update public.room_invites set
+    use_count = use_count + 1,
+    last_used_at = now(),
+    revoked_at = case when v_inv.role = 'owner' then now() else revoked_at end
+  where id = v_inv.id;
   return jsonb_build_object('room_id', v_inv.room_id, 'role', v_role);
 end;
 $$;
@@ -396,7 +402,8 @@ begin
     perform private.kc_raise('wrong_turn');
   end if;
   perform private.kc_validate_dice(p_dice);
-  if p_held is null or cardinality(p_held) <> 5 or array_position(p_held, null) is not null then
+  if p_held is null or cardinality(p_held) <> 5 or array_ndims(p_held) <> 1 or array_lower(p_held, 1) <> 1
+     or array_position(p_held, null) is not null then
     perform private.kc_raise('invalid_hold');
   end if;
 
@@ -490,11 +497,11 @@ begin
   select * into v_eval from private.kc_evaluate(v_roll.dice, p_category, v_kniffel, coalesce(p_strike, false));
 
   insert into public.game_scores (
-    game_id, room_id, player_id, category, kind, points, dice, joker, kniffel_bonus, turn_no, created_by
+    game_id, room_id, player_id, category, kind, points, dice, joker, strike_requested, kniffel_bonus, turn_no, created_by
   ) values (
     g.id, g.room_id, v_player, p_category,
     case when v_eval.points = 0 then 'struck' else 'scored' end,
-    v_eval.points, v_roll.dice, v_eval.joker, v_eval.kniffel_bonus, g.current_turn, v_user
+    v_eval.points, v_roll.dice, v_eval.joker, coalesce(p_strike, false), v_eval.kniffel_bonus, g.current_turn, v_user
   );
 
   update public.games set current_turn = current_turn + 1, version = version + 1
@@ -532,6 +539,8 @@ declare
   v_kniffel integer;
   v_eval record;
   v_dice smallint[];
+  x public.game_scores;
+  v_next record;
 begin
   g := private.kc_lock_game(p_game_id, p_expected_version);
   if p_reason is null or char_length(btrim(p_reason)) not between 3 and 300 then
@@ -545,14 +554,6 @@ begin
   end if;
   v_dice := coalesce(p_dice, s.dice);
   perform private.kc_validate_dice(v_dice);
-
-  -- Das Kniffel-Feld darf nicht korrigiert werden, wenn spätere Würfe davon abhängen (Joker/Zusatzpunkte).
-  if p_category = 'kniffel' and exists (
-    select 1 from public.game_scores x
-    where x.game_id = g.id and x.player_id = p_player_id and x.turn_no > s.turn_no and private.kc_is_kniffel(x.dice)
-  ) then
-    perform private.kc_raise('correction_conflict');
-  end if;
 
   -- Kontext: Kniffel-Feld zum Zeitpunkt der ursprünglichen Wertung.
   select points into v_kniffel from public.game_scores
@@ -574,10 +575,42 @@ begin
     kind = case when v_eval.points = 0 then 'struck' else 'scored' end,
     dice = v_dice,
     joker = v_eval.joker,
+    strike_requested = coalesce(p_strike, false),
     kniffel_bonus = v_eval.kniffel_bonus,
     corrected_at = now(),
     correction_count = correction_count + 1
   where id = s.id;
+
+  -- Folgekorrektur: Ändert sich das Kniffel-Feld, werden spätere Kniffel-Würfe dieses Spielers
+  -- (Zusatzpunkte und Joker hängen davon ab) neu bewertet. Gestrichene Felder bleiben gestrichen.
+  if p_category = 'kniffel' then
+    for x in
+      select * from public.game_scores
+      where game_id = g.id and player_id = p_player_id and turn_no > s.turn_no and private.kc_is_kniffel(dice)
+      order by turn_no
+      for update
+    loop
+      select * into v_next from private.kc_evaluate(x.dice, x.category, v_eval.points, x.strike_requested);
+      if v_next.points <> x.points or v_next.joker <> x.joker or v_next.kniffel_bonus <> x.kniffel_bonus then
+        insert into public.score_corrections (score_id, game_id, room_id, player_id, category, old_value, new_value, reason, created_by)
+        values (
+          x.id, g.id, g.room_id, p_player_id, x.category,
+          jsonb_build_object('points', x.points, 'kind', x.kind, 'dice', to_jsonb(x.dice), 'joker', x.joker, 'kniffel_bonus', x.kniffel_bonus),
+          jsonb_build_object('points', v_next.points, 'kind', case when v_next.points = 0 then 'struck' else 'scored' end,
+                             'dice', to_jsonb(x.dice), 'joker', v_next.joker, 'kniffel_bonus', v_next.kniffel_bonus),
+          left('Folgekorrektur (Kniffel-Feld geändert): ' || btrim(p_reason), 300), v_user
+        );
+        update public.game_scores set
+          points = v_next.points,
+          kind = case when v_next.points = 0 then 'struck' else 'scored' end,
+          joker = v_next.joker,
+          kniffel_bonus = v_next.kniffel_bonus,
+          corrected_at = now(),
+          correction_count = correction_count + 1
+        where id = x.id;
+      end if;
+    end loop;
+  end if;
 
   update public.games set version = version + 1 where id = g.id returning * into g;
   perform private.kc_log(g.id, g.room_id, 'score_corrected', jsonb_build_object(
@@ -694,6 +727,10 @@ declare
 begin
   g := private.kc_lock_game(p_game_id, null);
   perform private.kc_require_member(g.room_id, true);
+  -- Ein vollständiger Block muss abgerechnet werden; ein Abbruch würde den fälligen Einsatz umgehen.
+  if g.current_turn > 26 then
+    perform private.kc_raise('game_complete');
+  end if;
   if p_reason is null or char_length(btrim(p_reason)) not between 3 and 300 then
     perform private.kc_raise('reason_required');
   end if;
@@ -757,6 +794,9 @@ begin
   returning * into e;
   if e.id is null then
     select * into e from public.cash_ledger where room_id = p_room_id and idempotency_key = v_key;
+    if e.player_id <> p_player_id or e.amount_cents <> -p_amount_cents then
+      perform private.kc_raise('idempotency_conflict');
+    end if;
   end if;
   return e;
 end;
@@ -815,7 +855,34 @@ begin
   returning * into e;
   if e.id is null then
     select * into e from public.cash_ledger where room_id = p_room_id and idempotency_key = v_key;
+    if e.player_id <> p_player_id or e.amount_cents <> p_amount_cents then
+      perform private.kc_raise('idempotency_conflict');
+    end if;
   end if;
   return e;
+end;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- Mitglieder verwalten
+-- ---------------------------------------------------------------------------
+create or replace function public.remove_member(p_room_id uuid, p_user_id uuid)
+returns void
+language plpgsql
+volatile
+security definer
+set search_path = ''
+as $$
+declare
+  v_user uuid := private.kc_uid();
+begin
+  perform private.kc_require_member(p_room_id, true);
+  if p_user_id = v_user then
+    perform private.kc_raise('cannot_remove_self');
+  end if;
+  delete from public.room_members where room_id = p_room_id and user_id = p_user_id;
+  if not found then
+    perform private.kc_raise('member_not_found');
+  end if;
 end;
 $$;

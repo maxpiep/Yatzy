@@ -95,7 +95,7 @@ function ActiveGame() {
   const turnInRound = Math.min(game.currentTurn, TOTAL_TURNS);
 
   return (
-    <div className="page">
+    <div className={`page ${selected ? 'page--scorebar' : ''}`}>
       <header className="game-head">
         <div>
           <p className="eyebrow">
@@ -167,7 +167,7 @@ function ActiveGame() {
             </div>
           )}
           {room?.role === 'owner' && !view.isComplete && (
-            <Button variant="ghost" size="sm" onClick={() => setCancelling(true)} style={{ justifySelf: 'start' }}>
+            <Button variant="ghost" onClick={() => setCancelling(true)} style={{ justifySelf: 'start' }}>
               Partie abbrechen …
             </Button>
           )}
@@ -246,6 +246,7 @@ function ActiveGame() {
           game={game}
           players={snapshot.players}
           totals={view.totals}
+          correctionCount={scores.filter((s) => s.correctionCount > 0).length}
           onClose={() => setFinishing(false)}
           onFinish={async () => {
             const finished = await run((b) => b.finishGame(game.id), { quiet: true });

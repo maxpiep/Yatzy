@@ -159,6 +159,7 @@ export function calculateScore(
 /** Wertung beim bewussten Streichen: 0 Punkte, Zusatzpunkte eines weiteren Kniffels bleiben erhalten. */
 export function strikeScore(dice: Dice, category: Category, scorecard: Scorecard, ruleset: Ruleset): ScoreResult {
   validateDice(dice, ruleset.diceCount);
+  if (!isCategory(category)) throw new RuleError('invalid_category', 'Unbekannte Kategorie.');
   if (scorecard[category]) throw new RuleError('category_taken', 'Dieses Feld ist bereits belegt.');
   return {
     category,

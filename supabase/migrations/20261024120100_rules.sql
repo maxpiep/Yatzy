@@ -24,7 +24,7 @@ as $$
 declare
   v_d smallint;
 begin
-  if p_dice is null or cardinality(p_dice) <> 5 or array_ndims(p_dice) <> 1 then
+  if p_dice is null or cardinality(p_dice) <> 5 or array_ndims(p_dice) <> 1 or array_lower(p_dice, 1) <> 1 then
     perform private.kc_raise('invalid_dice');
   end if;
   foreach v_d in array p_dice loop

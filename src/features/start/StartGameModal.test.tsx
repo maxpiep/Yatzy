@@ -70,7 +70,7 @@ describe('Partiestart mit Einsatz-Auswahl', () => {
     ['stake-200', 200],
     ['stake-500', 500],
   ] as const)('Auswahl %s wird als %i Cent übergeben und erstellt genau eine Partie', async (testId, cents) => {
-    const onStart = vi.fn(async (s: StakeCents) => fakeGame(s));
+    const onStart = vi.fn(async (s: StakeCents, _key: string) => fakeGame(s));
     const onStarted = vi.fn();
     render(<Harness onStart={onStart} onStarted={onStarted} />);
     await userEvent.click(screen.getByRole('button', { name: 'Partie starten' }));
@@ -115,7 +115,7 @@ describe('Partiestart mit Einsatz-Auswahl', () => {
   });
 
   it('jedes Öffnen erzeugt einen neuen Idempotenzschlüssel', async () => {
-    const onStart = vi.fn(async (s: StakeCents) => fakeGame(s));
+    const onStart = vi.fn(async (s: StakeCents, _key: string) => fakeGame(s));
     render(<Harness onStart={onStart} />);
     for (let i = 0; i < 2; i++) {
       await userEvent.click(screen.getByRole('button', { name: 'Partie starten' }));

@@ -50,8 +50,8 @@
   border-top: 3px solid var(--player-color, transparent);
 }
 .sc-head-player small {
-  font-size: 0.6875rem;
-  color: var(--c-felt);
+  font-size: 0.75rem;
+  color: var(--c-success);
   font-weight: var(--fw-bold);
   text-transform: uppercase;
   letter-spacing: 0.04em;

@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import type { Member } from '../data/backend';
+import { formatDateTime } from '../lib/format';
 import type { Player, PlayerSlug } from '../domain/types';
 import { DEFAULT_RULESET } from '../domain/rules/ruleset';
 import { playerProfileInput, roomNameSchema } from '../domain/validation';
@@ -37,12 +39,55 @@ function PlayerProfile({ player }: { player: Player }) {
       </label>
       <div style={{ display: 'flex', gap: 8 }}>
         <input id={`name-${player.id}`} className="input" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
-        <input type="color" className="input" style={{ width: 56, padding: 4 }} value={color} onChange={(e) => setColor(e.target.value)} aria-label={`Farbe von ${player.displayName}`} />
+        <input type="color" className="input" style={{ width: 56, minWidth: 48, flex: 'none', padding: 4 }} value={color} onChange={(e) => setColor(e.target.value)} aria-label={`Farbe von ${player.displayName}`} />
         <Button type="submit" disabled={!dirty || !parsed.success}>
           Speichern
         </Button>
       </div>
     </form>
+  );
+}
+
+function MemberList({ roomId }: { roomId: string }) {
+  const { backend, run } = useClub();
+  const [members, setMembers] = useState<Member[] | null>(null);
+  const [version, setVersion] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    backend?.listMembers(roomId).then(
+      (m) => alive && setMembers(m),
+      () => alive && setMembers([]),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [backend, roomId, version]);
+  if (!members) return <p className="subtle">Lade Mitglieder …</p>;
+  return (
+    <ul className="rules-list" style={{ listStyle: 'none', padding: 0 }} aria-label="Mitglieder (Geräte)">
+      {members.map((m, i) => (
+        <li key={m.userId} style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <span>
+            Gerät {i + 1} · {m.role === 'owner' ? 'Admin' : 'Mitglied'} · seit {formatDateTime(m.joinedAt)}
+            {m.isSelf && <strong> (dieses Gerät)</strong>}
+          </span>
+          {!m.isSelf && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (!window.confirm('Diesem Gerät den Zugriff auf den Club entziehen?')) return;
+                void run((b) => b.removeMember(roomId, m.userId), { success: 'Zugriff entzogen' })
+                  .then(() => setVersion((v) => v + 1))
+                  .catch(() => {});
+              }}
+            >
+              Zugriff entziehen
+            </Button>
+          )}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -132,11 +177,14 @@ export function SettingsPage() {
                 {links.member ? <CopyField value={links.member} label="Einladungslink" /> : null}
                 <Button onClick={() => rotate('member')}>Einladungslink erzeugen</Button>
                 <hr className="divider" />
-                <p className="muted">Admin-Link zur Wiederherstellung deiner Rechte auf einem neuen Gerät. Niemals teilen.</p>
+                <p className="muted">Admin-Link zur Wiederherstellung deiner Rechte auf einem neuen Gerät – nur einmal verwendbar. Niemals teilen.</p>
                 {links.owner ? <CopyField value={links.owner} label="Admin-Link" /> : null}
                 <Button variant="ghost" onClick={() => rotate('owner')}>
                   Neuen Admin-Link erzeugen
                 </Button>
+                <hr className="divider" />
+                <h3>Geräte mit Zugriff</h3>
+                <MemberList roomId={snapshot.room.id} />
               </>
             ) : (
               <p className="muted">Nur Admins können Einladungslinks erzeugen.</p>

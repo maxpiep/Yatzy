@@ -151,6 +151,25 @@ describe('Raum, Einladung und Zugriffsschutz', () => {
     const other = randomUUID();
     expect((await db.rpc<{ role: string }>(other, 'join_room', [newToken])).role).toBe('member');
     expect((await db.rpc<{ role: string }>(other, 'join_room', [ownerToken])).role).toBe('owner');
+    // Admin-Links sind nur einmal verwendbar.
+    await expectKcError(db.rpc(randomUUID(), 'join_room', [ownerToken]), 'invalid_invite');
+  });
+
+  it('Owner kann einem Gerät den Zugriff entziehen, Mitglieder nicht', async () => {
+    const token = await db.rpc<string>(owner, 'rotate_invite', [roomId, 'member']);
+    const device = randomUUID();
+    await db.rpc(device, 'join_room', [token]);
+    await expectKcError(db.rpc(device, 'remove_member', [roomId, member]), 'owner_required');
+    await expectKcError(db.rpc(owner, 'remove_member', [roomId, owner]), 'cannot_remove_self');
+    await db.as(owner, 'select public.remove_member($1, $2)', [roomId, device]);
+    expect(await db.as(device, 'select * from public.games')).toHaveLength(0);
+    await expectKcError(db.rpc(device, 'create_game', [roomId, 200, randomUUID()]), 'forbidden');
+  });
+
+  it('neue Funktionen in public sind nicht automatisch für authenticated ausführbar', async () => {
+    await db.admin(`create function public.kc_probe() returns int language sql security definer as 'select 1'`);
+    await expect(db.as(owner, 'select public.kc_probe()')).rejects.toThrow(/permission denied/);
+    await db.admin('drop function public.kc_probe()');
   });
 });
 
@@ -263,6 +282,35 @@ describe('Würfe und Wertungen', () => {
   });
 });
 
+describe('Korrektur des Kniffel-Felds', () => {
+  it('berechnet spätere Kniffel-Wertungen (Zusatzpunkte, Joker) nach', async () => {
+    let g = await startGame(200);
+    const a = g.starting_player_id;
+    g = await rollAndScore(g, D(3, 3, 3, 3, 3), 'kniffel', true); // A streicht Kniffel versehentlich
+    g = await rollAndScore(g, D(1, 1, 2, 2, 3), 'chance'); // B
+    g = await rollAndScore(g, D(4, 4, 4, 4, 4), 'large_straight'); // A: kein Joker → 0
+    g = await rollAndScore(g, D(1, 1, 2, 2, 3), 'ones'); // B
+    g = await rollAndScore(g, D(6, 6, 6, 6, 6), 'sixes', true); // A: gestrichen
+    const before = await db.admin('select category, points, joker, kniffel_bonus from public.game_scores where game_id = $1 and player_id = $2 order by turn_no', [g.id, a]);
+    expect(before).toEqual([
+      { category: 'kniffel', points: 0, joker: false, kniffel_bonus: 0 },
+      { category: 'large_straight', points: 0, joker: false, kniffel_bonus: 0 },
+      { category: 'sixes', points: 0, joker: false, kniffel_bonus: 0 },
+    ]);
+    g = await db.rpc<GameRow>(owner, 'correct_score', [g.id, g.version, a, 'kniffel', D(3, 3, 3, 3, 3), false, 'Versehentlich gestrichen']);
+    const after = await db.admin('select category, kind, points, joker, kniffel_bonus from public.game_scores where game_id = $1 and player_id = $2 order by turn_no', [g.id, a]);
+    expect(after).toEqual([
+      { category: 'kniffel', kind: 'scored', points: 50, joker: false, kniffel_bonus: 0 },
+      { category: 'large_straight', kind: 'scored', points: 40, joker: true, kniffel_bonus: 50 },
+      { category: 'sixes', kind: 'struck', points: 0, joker: false, kniffel_bonus: 50 },
+    ]);
+    const corr = await db.admin<{ reason: string }>('select reason from public.score_corrections where game_id = $1 order by id', [g.id]);
+    expect(corr).toHaveLength(3);
+    expect(corr[1]!.reason).toMatch(/^Folgekorrektur/);
+    await finishCurrentIfAny();
+  });
+});
+
 describe('Abschluss und Kniffelkasse', () => {
   it('eine unvollständige Partie kann nicht abgeschlossen werden', async () => {
     let g = await startGame(200);
@@ -317,6 +365,13 @@ describe('Abschluss und Kniffelkasse', () => {
     expect(ledger[0]).toMatchObject({ player_id: maxiId, amount_cents: 200 });
     const events = await db.admin(`select count(*)::int as n from public.game_events where game_id = $1 and event_type = 'cash_settled'`, [g.id]);
     expect(events[0]!.n).toBe(1);
+  });
+
+  it('ein vollständiger Block kann nicht mehr abgebrochen werden (Einsatz bleibt fällig)', async () => {
+    const g = await playFullGame(200, (pid, cat) => (pid === maxiId ? goodDice[cat] : D(1, 1, 2, 2, 3)));
+    await expectKcError(db.rpc(owner, 'cancel_game', [g.id, 'Keine Lust zu zahlen']), 'game_complete');
+    await db.rpc(owner, 'finish_game', [g.id]);
+    expect(await ledgerFor(g.id)).toHaveLength(1);
   });
 
   it('eine fehlgeschlagene Transaktion hinterlässt keine Teilbuchung', async () => {

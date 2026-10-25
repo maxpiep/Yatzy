@@ -38,6 +38,13 @@ export interface GameDetail {
   ledger: LedgerEntry[];
 }
 
+export interface Member {
+  userId: string;
+  role: Room['role'];
+  joinedAt: string;
+  isSelf: boolean;
+}
+
 export interface CreatedRoom {
   roomId: string;
   memberToken: string | null;
@@ -56,6 +63,8 @@ export interface Backend {
   createRoom(name: string, maxiName: string, franziName: string): Promise<CreatedRoom>;
   joinRoom(token: string): Promise<{ roomId: string; role: Room['role'] }>;
   rotateInvite(roomId: string, role: Room['role']): Promise<string>;
+  listMembers(roomId: string): Promise<Member[]>;
+  removeMember(roomId: string, userId: string): Promise<void>;
   updateRoom(roomId: string, name: string): Promise<void>;
   updatePlayer(playerId: string, displayName: string, color: string): Promise<void>;
 
