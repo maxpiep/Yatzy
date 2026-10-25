@@ -49,7 +49,8 @@ Gewürfelt wird mit echten Würfeln, eingetragen wird nur der Wert – wie auf d
 
 Ein **weiterer Kniffel** (nur möglich, wenn das Kniffel-Feld bereits 50 Punkte hat): auf das eigene Kniffel-Feld
 tippen → „Weiteren Kniffel eintragen“ oder den Knopf „Weiteren Kniffel gewürfelt?“ nutzen, dann ein freies Feld
-antippen. Die Höchstpunktzahl des Feldes (Joker) ist vorgewählt, dazu kommen +50 Zusatzpunkte. Ist das Kniffel-Feld
+antippen. Bei Full House und Straßen steht der feste Wert sofort fest, sonst fragt die App „Welche Augenzahl hat der
+Kniffel?“ und rechnet den Joker-Wert aus (siehe unten), dazu kommen +50 Zusatzpunkte. Ist das Kniffel-Feld
 gestrichen, erklärt die App, dass es keine Zusatzpunkte gibt.
 Implementierung: `src/domain/rules/manual.ts`, serverseitig `private.kc_manual_valid` und `public.score_manual` /
 `public.correct_manual` (Migration `20261025120000_manual_scoring.sql`); ein Test prüft, dass TypeScript und SQL
@@ -77,16 +78,18 @@ Ein **weiterer Kniffel** liegt vor, wenn fünf gleiche Würfel fallen **und das 
 Punkten belegt ist**. Dann gilt:
 
 1. **+50 Zusatzpunkte** (gespeichert an der Wertung des Zuges, `kniffel_bonus`, angezeigt als „Zusatzpunkte“).
-2. **Joker:** Der Wurf darf in **jedes freie Feld** eingetragen werden und zählt dort dessen
-   **Höchstpunktzahl** – unabhängig von der Augenzahl:
+2. **Joker:** Der Wurf darf in **jedes freie Feld** eingetragen werden und zählt dort:
 
-   | Feld | Höchstpunktzahl |
+   | Feld | Joker-Wert |
    | --- | --- |
-   | Einser / Zweier / Dreier / Vierer / Fünfer / Sechser | 5 / 10 / 15 / 20 / 25 / 30 |
-   | Dreierpasch / Viererpasch / Chance | 30 |
-   | Full House / Kleine Straße / Große Straße | 25 / 30 / 40 |
+   | Einser … Sechser | 5 × Augenzahl im passenden Feld (fünf Vierer → Vierer 20), in jedem anderen oberen Feld 0 |
+   | Dreierpasch / Viererpasch / Chance | Augensumme (fünf Dreier → 15) |
+   | Full House / Kleine Straße / Große Straße | voller Wert 25 / 30 / 40, unabhängig von der Augenzahl |
 
-   Beispiel: Fünf Vierer → Fünfer-Feld mit 25 Punkten (+50 Zusatzpunkte).
+   Bei der Direkteingabe wählt ihr dazu die Augenzahl des Kniffels, die App rechnet den Wert aus
+   (`jokerPoints` in `src/domain/rules/manual.ts`). Eine feste Reihenfolge der Felder wird nicht erzwungen.
+   Hinweis: Die ältere würfelbasierte Wertung im Backend (`calculateScore`, `private.kc_evaluate`, von der
+   Oberfläche nicht mehr genutzt) folgt noch Regelwerk-Version 1 mit Höchstpunktzahl in jedem Feld.
 3. Joker-Punkte im oberen Block zählen für den 63er-Bonus.
 4. Wer einen weiteren Kniffel trotzdem **streicht**, erhält 0 im Feld, behält aber die +50 Zusatzpunkte.
 
