@@ -7,6 +7,7 @@ import type { MemberRole, Room } from '../src/domain/types';
 import {
   adjustmentInput,
   confirmRollInput,
+  categorySchema,
   correctScoreInput,
   createGameInput,
   inviteTokenSchema,
@@ -276,6 +277,25 @@ export class ClubServer {
           const roomId = gameRoom(input.gameId);
           if (e.roomIdForPlayer(input.playerId) !== roomId) fail('invalid_player');
           const result = await e.correctScore(input.gameId, input.expectedVersion, input.playerId, input.category, input.dice as number[], input.strike, input.reason);
+          return { result, changedRoom: roomId };
+        }
+        case 'scoreManual': {
+          const input = this.parse(
+            z.object({ gameId: uuidSchema, expectedVersion: z.number().int().positive(), turnNo: z.number().int().min(1).max(26), category: categorySchema, points: z.number(), extra: z.boolean() }),
+            { gameId: a[0], expectedVersion: a[1], turnNo: a[2], category: a[3], points: a[4], extra: a[5] },
+          );
+          const roomId = gameRoom(input.gameId);
+          const result = await e.scoreManual(input.gameId, input.expectedVersion, input.turnNo, input.category, input.points, input.extra);
+          return { result, changedRoom: roomId };
+        }
+        case 'correctManual': {
+          const input = this.parse(
+            z.object({ gameId: uuidSchema, expectedVersion: z.number().int().positive(), playerId: uuidSchema, category: categorySchema, points: z.number(), extra: z.boolean(), reason: z.string() }),
+            { gameId: a[0], expectedVersion: a[1], playerId: a[2], category: a[3], points: a[4], extra: a[5], reason: a[6] },
+          );
+          const roomId = gameRoom(input.gameId);
+          if (e.roomIdForPlayer(input.playerId) !== roomId) fail('invalid_player');
+          const result = await e.correctManual(input.gameId, input.expectedVersion, input.playerId, input.category, input.points, input.extra, input.reason);
           return { result, changedRoom: roomId };
         }
         case 'finishGame': {

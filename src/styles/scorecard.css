@@ -217,3 +217,9 @@
 .sc-flash {
   animation: none;
 }
+
+.sc-preview--open {
+  color: var(--c-felt);
+  font-size: var(--fs-xl);
+  font-weight: var(--fw-regular);
+}

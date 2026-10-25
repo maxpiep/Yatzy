@@ -83,6 +83,18 @@ export interface Backend {
     strike: boolean,
     reason: string,
   ): Promise<Game>;
+  /** Direkteingabe wie auf dem Papierblock: Feld + Wert (0 = streichen), optional weiterer Kniffel (+50). */
+  scoreManual(gameId: string, expectedVersion: number, turnNo: number, category: Category, points: number, extraKniffel: boolean): Promise<Game>;
+  /** Protokollierte Korrektur eines direkt eingetragenen Werts. */
+  correctManual(
+    gameId: string,
+    expectedVersion: number,
+    playerId: string,
+    category: Category,
+    points: number,
+    extraKniffel: boolean,
+    reason: string,
+  ): Promise<Game>;
   finishGame(gameId: string): Promise<Game>;
   cancelGame(gameId: string, reason: string): Promise<Game>;
 
