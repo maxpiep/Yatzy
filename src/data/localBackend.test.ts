@@ -120,3 +120,27 @@ describe('LocalBackend – Folgekorrektur', () => {
     expect(await code(b.cancelGame(g0.id, 'Kein Bock'))).toBe('game_complete');
   });
 });
+
+describe('LocalBackend – Datensicherung', () => {
+  it('exportiert und stellt den vollständigen Stand wieder her', async () => {
+    const { b, roomId, maxi } = await setup();
+    await b.createGame(roomId, 500, crypto.randomUUID());
+    await b.recordPayment(roomId, maxi.id, 300, 'bar', crypto.randomUUID());
+    const backup = b.exportData();
+    const fresh = new LocalBackend(mem());
+    await fresh.init();
+    expect(fresh.importData(backup)).toEqual({ games: 1, ledger: 1 });
+    const snap = await fresh.getRoomSnapshot(roomId);
+    expect(snap.active?.game.stakeCents).toBe(500);
+    expect(snap.ledger[0]).toMatchObject({ amountCents: -300, type: 'payment' });
+  });
+
+  it('weist ungültige oder manipulierte Dateien ab', async () => {
+    const { b } = await setup();
+    expect(() => b.importData('kein json')).toThrow(BackendError);
+    expect(() => b.importData(JSON.stringify({ format: 'anderes', data: {} }))).toThrow(BackendError);
+    const tampered = JSON.parse(b.exportData());
+    tampered.data.games = [{ stake_amount_cents: 300 }];
+    expect(() => b.importData(JSON.stringify(tampered))).toThrow(BackendError);
+  });
+});

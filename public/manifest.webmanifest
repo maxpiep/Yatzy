@@ -1,0 +1,12 @@
+{
+  "name": "Kniffel Club",
+  "short_name": "Kniffel",
+  "description": "Kniffel-Block für Maxi & Franzi mit echten Würfeln, Bestenliste und Kniffelkasse.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f0e6",
+  "theme_color": "#1e4b3d",
+  "icons": [{ "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

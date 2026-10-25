@@ -1,14 +1,25 @@
 # Deployment
 
-Kniffel Club läuft **ohne Supabase und ohne Vercel**. Es gibt drei Betriebsarten:
+Kniffel Club läuft **ohne Supabase und ohne Vercel**. Hauptweg ist **ein gemeinsames Gerät mit echten Würfeln**:
 
 | Betriebsart | Mehrere Geräte | Benötigt | Build |
 | --- | --- | --- | --- |
-| **Eigener Server** (empfohlen) | ja, Echtzeit | einen Rechner, der läuft (PC, Raspberry Pi, NAS, beliebiger Server) | `npm run build:selfhost` |
-| **GitHub Pages** | nein (ein gemeinsames Gerät) | nichts außer dem GitHub-Repository | `npm run build:pages` (automatisch per Workflow) |
+| **GitHub Pages – ein Gerät** (Standard) | nein, ein gemeinsames Gerät | nichts außer dem GitHub-Repository | `npm run build:pages` (automatisch per Workflow) |
+| Eigener Server (optional) | ja, Echtzeit | einen Rechner, der dauerhaft läuft | `npm run build:selfhost` |
 | Supabase + Vercel (optional) | ja, Echtzeit | Supabase- und Vercel-Konto | `npm run build` |
 
-## A. Eigener Server (ohne Supabase/Vercel)
+## A. GitHub Pages – ein Gerät (Standard)
+
+Der Workflow `.github/workflows/pages.yml` baut bei jedem Push auf `main` und veröffentlicht unter
+`https://maxpiep.github.io/Yatzy/`. Alle Daten liegen im Browser des Geräts; die App bittet den Browser um
+dauerhaften Speicher. **Datensicherung:** Einstellungen → Datensicherung → „Sicherung herunterladen“
+(JSON-Datei); „Sicherung wiederherstellen“ ersetzt den Stand auf einem Gerät vollständig (mit Rückfrage, Datei
+wird geprüft).
+
+Falls der erste Lauf mit einem Hinweis zu Pages scheitert: einmalig unter **Settings → Pages → Source**
+„GitHub Actions“ wählen.
+
+## B. Eigener Server (optional, zwei Geräte)
 
 Der Server (`server/`) liefert die App aus, speichert alle Daten in **einer JSON-Datei** (atomar geschrieben,
 Backup `*.bak` bei jedem Start) und synchronisiert alle Geräte per Server-Sent Events. Er nutzt dieselbe getestete
@@ -48,15 +59,6 @@ Umgebungsvariablen (optional): `PORT` (8787), `HOST` (0.0.0.0), `DATA_FILE` (`da
 - Neue Geräte-Sitzungen sind pro IP begrenzt (30 pro Stunde); Anfragen sind auf 64 KB begrenzt.
 - Sicherheits-Header inkl. Content-Security-Policy; Echtzeit-Stream authentifiziert per Header (kein Token in URLs).
 - **Backup:** die Datei `DATA_FILE` regelmäßig sichern.
-
-## B. GitHub Pages (Ein-Gerät-Modus)
-
-Der Workflow `.github/workflows/pages.yml` baut bei jedem Push auf `main` den Ein-Gerät-Modus und veröffentlicht
-ihn unter `https://<benutzer>.github.io/Yatzy/`. Daten bleiben im Browser des Geräts (z. B. ein Tablet auf dem
-Tisch); es gibt keine Synchronisierung zwischen Geräten.
-
-Falls der erste Lauf mit einem Hinweis zu Pages scheitert: einmalig unter **Settings → Pages → Source**
-„GitHub Actions“ wählen.
 
 ## C. Optional: Supabase + Vercel
 

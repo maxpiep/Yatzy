@@ -10,6 +10,7 @@ import { usePreferences, type MotionPref, type ThemePref } from '../state/prefer
 import { Button } from '../ui/Button';
 import { ConnectionStatus } from '../ui/ConnectionStatus';
 import { CopyField, inviteUrl } from '../ui/CopyField';
+import { BackupPanel } from '../features/backup/BackupPanel';
 
 const SYNC_TEXT: Record<SyncState, string> = {
   connecting: 'Verbinde mit dem Server …',
@@ -150,6 +151,7 @@ export function SettingsPage() {
             {snapshot.players.map((p) => (
               <PlayerProfile key={`${p.id}:${p.displayName}:${p.color}`} player={p} />
             ))}
+            {!local && (
             <fieldset className="field" style={{ border: 0, padding: 0, margin: 0 }}>
               <legend className="field__label">Dieses Gerät gehört</legend>
               <div className="segmented">
@@ -162,13 +164,15 @@ export function SettingsPage() {
               </div>
               <span className="field__hint">Nur zur Anzeige. Jedes Mitglied kann für beide Spieler eintragen – ihr spielt am selben Tisch.</span>
             </fieldset>
+            )}
           </section>
 
+          {local ? (
+            <BackupPanel />
+          ) : (
           <section className="panel">
             <h2>Einladen</h2>
-            {local ? (
-              <p className="muted">Im lokalen Modus gibt es keinen gemeinsamen Server und keine Einladungen. Richte Supabase ein, um auf zwei Geräten zu spielen.</p>
-            ) : isOwner ? (
+            {isOwner ? (
               <>
                 <p className="muted">
                   Einladungslinks sind 14 Tage gültig und geben Spielzugriff, aber keine Admin-Rechte. Aus Sicherheitsgründen wird nur ein Hash gespeichert – ein neuer Link
@@ -190,6 +194,7 @@ export function SettingsPage() {
               <p className="muted">Nur Admins können Einladungslinks erzeugen.</p>
             )}
           </section>
+          )}
         </div>
 
         <div className="settings">
@@ -201,7 +206,7 @@ export function SettingsPage() {
             <p className="muted">{SYNC_TEXT[syncState]}</p>
             <dl className="kv">
               <dt>Backend</dt>
-              <dd>{local ? 'Lokal (Browser-Speicher)' : backend?.mode === 'server' ? 'Eigener Kniffel-Club-Server (Echtzeit)' : 'Supabase (PostgreSQL + Realtime)'}</dd>
+              <dd>{local ? 'Ein Gerät (Daten im Browser dieses Geräts)' : backend?.mode === 'server' ? 'Eigener Kniffel-Club-Server (Echtzeit)' : 'Supabase (PostgreSQL + Realtime)'}</dd>
               {!local && config && (
                 <>
                   <dt>Projekt</dt>

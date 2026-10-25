@@ -69,6 +69,8 @@ export class LocalBackend implements Backend {
 
   async init(): Promise<void> {
     this.read();
+    // Browser bitten, die Daten nicht bei Speicherknappheit zu löschen (Ein-Gerät-Modus).
+    if (typeof navigator !== 'undefined') void navigator.storage?.persist?.().catch(() => false);
   }
 
   private read(): LocalState {
@@ -135,6 +137,36 @@ export class LocalBackend implements Backend {
   private turnPlayer(s: LocalState, g: DbGame, turn: number): string {
     const ids = s.players.filter((p) => p.room_id === g.room_id).map((p) => p.id);
     return playerIdForTurn(turn, g.starting_player_id, ids);
+  }
+
+  /** Vollständige Datensicherung (alle Partien, Wertungen, Kassenbuch) als JSON-Text. */
+  exportData(): string {
+    return JSON.stringify({ format: 'kniffel-club-backup', exportedAt: now(), data: this.read() }, null, 2);
+  }
+
+  /**
+   * Stellt eine Datensicherung wieder her und ersetzt den aktuellen Stand vollständig.
+   * Wirft `invalid_backup`, wenn die Datei kein gültiges Kniffel-Club-Backup ist.
+   */
+  importData(text: string): { games: number; ledger: number } {
+    let parsed: { format?: string; data?: Partial<LocalState> };
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      throw new BackendError('invalid_backup');
+    }
+    const d = parsed?.data;
+    const arrays = ['rooms', 'players', 'games', 'rolls', 'scores', 'corrections', 'events', 'ledger'] as const;
+    if (parsed?.format !== 'kniffel-club-backup' || !d || d.version !== 1 || typeof d.userId !== 'string' || typeof d.seq !== 'number' || !arrays.every((k) => Array.isArray(d[k]))) {
+      throw new BackendError('invalid_backup');
+    }
+    const state = d as LocalState;
+    if (state.games.some((g) => ![100, 200, 500].includes(g.stake_amount_cents)) || state.ledger.some((e) => !Number.isSafeInteger(e.amount_cents))) {
+      throw new BackendError('invalid_backup');
+    }
+    this.storage.setItem(STORAGE_KEY, JSON.stringify(state));
+    queueMicrotask(() => this.listeners.forEach((l) => l()));
+    return { games: state.games.length, ledger: state.ledger.length };
   }
 
   /** Raum einer Partie bzw. eines Spielers (für Berechtigungsprüfungen des Servers). */

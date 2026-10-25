@@ -123,3 +123,23 @@ test('Direktaufruf einer unbekannten Seite zeigt eine Fehlerseite', async ({ pag
   await page.goto('/gibt-es-nicht');
   await expect(page.getByRole('heading', { name: 'Seite nicht gefunden' })).toBeVisible();
 });
+
+test('Datensicherung lässt sich herunterladen und wiederherstellen', async ({ page }) => {
+  await createClub(page);
+  await page.getByTestId('open-start').click();
+  await page.getByTestId('stake-200').click();
+  await page.getByTestId('confirm-start').click();
+  await expect(page.getByTestId('game-stake')).toBeVisible();
+  await page.goto('/einstellungen');
+  const [download] = await Promise.all([page.waitForEvent('download'), page.getByTestId('backup-export').click()]);
+  const path = await download.path();
+  await page.evaluate(() => localStorage.clear());
+  await page.goto('/');
+  await page.getByTestId('create-club').click();
+  await page.goto('/einstellungen');
+  page.once('dialog', (d) => void d.accept());
+  await page.getByTestId('backup-import').setInputFiles(path);
+  await page.waitForLoadState('load');
+  await page.goto('/');
+  await expect(page.getByTestId('live-game')).toBeVisible();
+});

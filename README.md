@@ -31,15 +31,19 @@ React 19 · TypeScript · Vite 8 · eigenes CSS-Design-System (Tokens in `src/st
 eigener Node-Server (Datei-Speicher, Server-Sent Events) oder optional Supabase (PostgreSQL, RLS, Realtime) · Zod · GSAP (`@gsap/react`) · Lenis ·
 eine angepasste React-Bits-Komponente (`AnimatedContent`) · Vitest + Testing Library · Playwright.
 
-## Betrieb ohne Supabase und Vercel
+## So wird gespielt: ein Gerät, echte Würfel
 
-```bash
-docker compose up -d --build     # eigener Server mit Echtzeit-Sync auf Port 8787
-# oder: npm ci && npm run build:selfhost && npm start
-```
+Ihr würfelt mit echten Würfeln am Tisch und tragt jeden Wurf auf **einem gemeinsamen Gerät** ein (Handy oder
+Tablet, das weitergereicht wird). Die App ist ohne Server, Supabase oder Vercel nutzbar:
 
-Beide Handys öffnen `http://<rechner>:8787`, ein Gerät gründet den Club und teilt den Einladungslink.
-Zusätzlich veröffentlicht GitHub Pages automatisch den Ein-Gerät-Modus. Details: [`docs/deployment.md`](docs/deployment.md).
+- **Online:** https://maxpiep.github.io/Yatzy/ – wird bei jedem Push auf `main` automatisch per GitHub Pages
+  veröffentlicht. Tipp: „Zum Startbildschirm hinzufügen“, dann startet sie wie eine App.
+- Alle Partien, die Bestenliste und die Kniffelkasse werden im Browser dieses Geräts gespeichert.
+  **Unter Einstellungen → Datensicherung regelmäßig eine Sicherung herunterladen** – damit lässt sich der Stand
+  auch auf einem neuen Gerät wiederherstellen.
+
+Optional, falls ihr später doch zwei Handys synchron nutzen wollt: eigener Server (`docker compose up -d --build`)
+oder Supabase – siehe [`docs/deployment.md`](docs/deployment.md).
 
 ## Installation & Entwicklung
 

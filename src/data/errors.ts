@@ -42,6 +42,7 @@ export const ERROR_MESSAGES: Record<string, string> = {
   game_complete: 'Beide Wertungsblöcke sind vollständig – die Partie muss abgeschlossen und abgerechnet werden.',
   cannot_remove_self: 'Du kannst dich nicht selbst entfernen.',
   member_not_found: 'Dieses Mitglied wurde nicht gefunden.',
+  invalid_backup: 'Diese Datei ist keine gültige Kniffel-Club-Datensicherung.',
   network: 'Keine Verbindung zum Server. Bitte Internetverbindung prüfen und erneut versuchen.',
   unknown: 'Unerwarteter Fehler. Bitte erneut versuchen.',
 };
