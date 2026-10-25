@@ -33,3 +33,7 @@ jobs:
       - run: npm run test:e2e
         env:
           CI: '1'
+      - run: npm run test:e2e:server
+        env:
+          CI: '1'
+      - run: docker build -t kniffel-club .

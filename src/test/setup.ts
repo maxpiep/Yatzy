@@ -3,6 +3,7 @@ import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 
 afterEach(() => {
+  if (typeof window === 'undefined') return;
   cleanup();
   try {
     window.localStorage.clear();
@@ -11,7 +12,7 @@ afterEach(() => {
   }
 });
 
-if (!window.matchMedia) {
+if (typeof window !== 'undefined' && !window.matchMedia) {
   Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: (query: string) => ({

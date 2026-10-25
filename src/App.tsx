@@ -63,7 +63,7 @@ function ActiveGameRedirect() {
 function Shell() {
   const { phase, snapshot } = useClub();
   const location = useLocation();
-  if (location.pathname === '/beitreten' && phase.kind !== 'booting' && phase.kind !== 'unconfigured') return <JoinPage />;
+  if (location.pathname.endsWith('/beitreten') && phase.kind !== 'booting' && phase.kind !== 'unconfigured') return <JoinPage />;
   if (phase.kind === 'booting') return <LoadingScreen />;
   if (phase.kind === 'unconfigured') return <UnconfiguredScreen />;
   if (phase.kind === 'fatal') return <FatalScreen error={phase.error} />;
@@ -93,7 +93,7 @@ export function App({ choice }: { choice?: () => BackendChoice }) {
       <PreferencesProvider>
         <ToastProvider>
           <ClubProvider choice={choice}>
-            <BrowserRouter>
+            <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, '') || '/'}>
               <SmoothScroll />
               <Shell />
             </BrowserRouter>

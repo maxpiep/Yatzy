@@ -15,5 +15,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "vitest.db.config.ts", "playwright.config.ts", "tests", "e2e"]
+  "include": ["vite.config.ts", "vitest.db.config.ts", "playwright.config.ts", "playwright.server.config.ts", "vite.server.config.ts", "tests", "e2e", "server"]
 }

@@ -20,7 +20,7 @@ dauerhafter Spielhistorie, Bestenliste und einer nachvollziehbaren Kniffelkasse.
   Filter nach Person, Typ und Zeitraum.
 - **Spielhistorie** mit Detailansicht (Wertungsblock, Buchungen, Korrekturen, Ereignisprotokoll).
 - **Bestenliste** aus abgeschlossenen Partien: Siege, Quote, Ø/Höchst-/Niedrigstpunkte, Serien, direkter Vergleich.
-- **Multiplayer:** Supabase (PostgreSQL + Realtime), Einladungslink, Rollen, RLS, Verbindungsstatus.
+- **Multiplayer:** eigener Server oder Supabase, Einladungslink, Rollen, Verbindungsstatus.
 - **Einstellungen:** Spielerprofile, Gerätezuordnung, Einladungen, Hell/Dunkel, reduzierte Animationen,
   sanftes Scrollen, Regelübersicht.
 - Barrierefrei: semantisches HTML, Tastatur, sichtbarer Fokus, Screenreader-Texte, Dialoge mit Fokusfalle.
@@ -28,8 +28,18 @@ dauerhafter Spielhistorie, Bestenliste und einer nachvollziehbaren Kniffelkasse.
 ## Technologien
 
 React 19 · TypeScript · Vite 8 · eigenes CSS-Design-System (Tokens in `src/styles/tokens.css`) ·
-Supabase (PostgreSQL, RLS, Realtime, Anonymous Auth) · Zod · GSAP (`@gsap/react`) · Lenis ·
+eigener Node-Server (Datei-Speicher, Server-Sent Events) oder optional Supabase (PostgreSQL, RLS, Realtime) · Zod · GSAP (`@gsap/react`) · Lenis ·
 eine angepasste React-Bits-Komponente (`AnimatedContent`) · Vitest + Testing Library · Playwright.
+
+## Betrieb ohne Supabase und Vercel
+
+```bash
+docker compose up -d --build     # eigener Server mit Echtzeit-Sync auf Port 8787
+# oder: npm ci && npm run build:selfhost && npm start
+```
+
+Beide Handys öffnen `http://<rechner>:8787`, ein Gerät gründet den Club und teilt den Einladungslink.
+Zusätzlich veröffentlicht GitHub Pages automatisch den Ein-Gerät-Modus. Details: [`docs/deployment.md`](docs/deployment.md).
 
 ## Installation & Entwicklung
 
@@ -51,6 +61,9 @@ Gerät, keine Synchronisierung). Erzwingen: `VITE_BACKEND_MODE=local npm run dev
 | `npm test` | Unit-/Komponententests (Regeln, Kasse, Statistik, Einsatz-Modal, Würfeingabe, lokales Backend) |
 | `npm run test:db` | Datenbanktests gegen lokale PostgreSQL (Migrationen, RPCs, RLS, Nebenläufigkeit, Regel-Parität SQL↔TS) |
 | `npm run test:e2e` | Playwright im lokalen Modus (komplette Partie, Abbruch, Kasse, zwei Tabs, mobile Breite) |
+| `npm run test:e2e:server` | Playwright gegen den eigenen Server: zwei getrennte Geräte spielen dieselbe Partie in Echtzeit |
+| `npm run build:selfhost` / `npm start` | Eigenen Server bauen und starten |
+| `npm run build:pages` | Build für GitHub Pages (Ein-Gerät-Modus) |
 | `npm run build` | Produktions-Build |
 | `npm run check` | Lint + Typecheck + Unit-Tests + Build |
 

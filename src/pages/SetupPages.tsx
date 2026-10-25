@@ -181,7 +181,7 @@ export function JoinPage() {
     started.current = true;
     // Token nur im Speicher halten und sofort aus der Adresszeile entfernen (Verlauf, Screenshots, Teilen).
     token.current = new URLSearchParams(window.location.hash.slice(1)).get('t') ?? '';
-    window.history.replaceState(null, '', '/beitreten');
+    window.history.replaceState(null, '', `${import.meta.env.BASE_URL}beitreten`);
     attempt();
   }, [backend, attempt]);
 

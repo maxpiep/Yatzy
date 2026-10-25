@@ -137,6 +137,15 @@ export class LocalBackend implements Backend {
     return playerIdForTurn(turn, g.starting_player_id, ids);
   }
 
+  /** Raum einer Partie bzw. eines Spielers (für Berechtigungsprüfungen des Servers). */
+  roomIdForGame(gameId: string): string | null {
+    return this.read().games.find((g) => g.id === gameId)?.room_id ?? null;
+  }
+
+  roomIdForPlayer(playerId: string): string | null {
+    return this.read().players.find((p) => p.id === playerId)?.room_id ?? null;
+  }
+
   async listRooms(): Promise<Room[]> {
     return this.read().rooms.map((r) => ({ id: r.id, name: r.name, createdAt: r.created_at, role: 'owner' as const }));
   }

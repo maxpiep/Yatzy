@@ -201,7 +201,7 @@ export function SettingsPage() {
             <p className="muted">{SYNC_TEXT[syncState]}</p>
             <dl className="kv">
               <dt>Backend</dt>
-              <dd>{local ? 'Lokal (Browser-Speicher)' : 'Supabase (PostgreSQL + Realtime)'}</dd>
+              <dd>{local ? 'Lokal (Browser-Speicher)' : backend?.mode === 'server' ? 'Eigener Kniffel-Club-Server (Echtzeit)' : 'Supabase (PostgreSQL + Realtime)'}</dd>
               {!local && config && (
                 <>
                   <dt>Projekt</dt>

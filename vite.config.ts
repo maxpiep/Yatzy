@@ -1,8 +1,10 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // Für GitHub Pages (Unterpfad /Yatzy/) per VITE_BASE setzen, sonst Wurzel.
+  base: loadEnv(mode, process.cwd(), 'VITE_').VITE_BASE || '/',
   plugins: [react()],
   build: {
     target: 'es2022',
@@ -24,7 +26,7 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
-    include: ['src/**/*.test.{ts,tsx}'],
+    include: ['src/**/*.test.{ts,tsx}', 'server/**/*.test.ts'],
     css: false,
   },
-});
+}));
